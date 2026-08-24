@@ -1,0 +1,23 @@
+{
+  "orgInfo": {
+    "name": "Công Ty Cổ Phần Bệnh Viện Thuận Mỹ TDM",
+    "phone": "02743835117",
+    "address": "Số 152 Huỳnh Văn Cù, P. Thủ Dầu Một, TP. Hồ Chí Minh",
+    "taxCode": "3701604767",
+    "logoUrl": "/docs/logo_1787553050152.jpg",
+    "faviconUrl": "/docs/favicon_1787553066331.png"
+  },
+  "systemInfo": {
+    "softwareName": "Quản lý tài sản",
+    "developer": "Google DeepMind Team & Advanced Agentic Engineering",
+    "version": "v2.5.0-Enterprise (Build 2026.08)",
+    "licenseType": "Bản Quyền Doanh Nghiệp (Enterprise License - Unlimited Nodes)",
+    "releaseDate": "24/08/2026"
+  },
+  "config": {
+    "telemetryInterval": "30",
+    "enableDriftAlert": true,
+    "networkSubnet": "192.168.1.0/24",
+    "autoScanNewDevices": true
+  }
+}
