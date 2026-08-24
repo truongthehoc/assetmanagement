@@ -33,7 +33,8 @@ import {
   Settings,
   ChevronDown,
   Package,
-  Layers
+  Layers,
+  Grid
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
 
