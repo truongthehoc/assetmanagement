@@ -31,7 +31,8 @@ import {
   Radio,
   QrCode,
   Settings,
-  ChevronDown
+  ChevronDown,
+  Package
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
 
