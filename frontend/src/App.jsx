@@ -207,7 +207,7 @@ export default function App() {
 
   const handleTriggerRealScan = async () => {
     try {
-      await fetch('/api/agent/trigger-scan', { method: 'POST' });
+      await fetch(apiUrl('/api/agent/trigger-scan'), { method: 'POST' });
       await fetchAllData();
     } catch (err) {
       console.error(err);
@@ -216,7 +216,7 @@ export default function App() {
 
   const handleApproveDevice = async (onboardPayload) => {
     try {
-      const res = await fetch('/api/discovery/approve', {
+      const res = await fetch(apiUrl('/api/discovery/approve'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(onboardPayload)
@@ -235,7 +235,7 @@ export default function App() {
 
   const handleRejectDevice = async (pendingId) => {
     try {
-      await fetch('/api/discovery/reject', {
+      await fetch(apiUrl('/api/discovery/reject'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pendingId })
@@ -248,7 +248,7 @@ export default function App() {
 
   const handleResolveDrift = async (alertId, updateBaseline) => {
     try {
-      await fetch(`/api/drifts/${alertId}/resolve`, {
+      await fetch(apiUrl(`/api/drifts/${alertId}/resolve`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resolvedBy: 'IT Admin', updateBaseline })
@@ -261,7 +261,7 @@ export default function App() {
 
   const handleTransferAsset = async (transferPayload) => {
     try {
-      await fetch('/api/lifecycle/transfer', {
+      await fetch(apiUrl('/api/lifecycle/transfer'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(transferPayload)
@@ -274,7 +274,7 @@ export default function App() {
 
   const handleCompleteMaintenance = async (id, notes) => {
     try {
-      await fetch(`/api/maintenance/${id}/complete`, {
+      await fetch(apiUrl(`/api/maintenance/${id}/complete`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ notes })
@@ -287,7 +287,7 @@ export default function App() {
 
   const handleScanAudit = async (auditPayload) => {
     try {
-      const res = await fetch('/api/audit/scan', {
+      const res = await fetch(apiUrl('/api/audit/scan'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(auditPayload)

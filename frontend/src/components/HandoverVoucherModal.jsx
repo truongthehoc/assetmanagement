@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Printer, X, QrCode, CheckCircle2, ShieldCheck, ArrowRightLeft, Building2 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { apiUrl } from '../utils/api';
 
 export default function HandoverVoucherModal({ voucherData, onClose, orgInfo, systemInfo, theme }) {
   if (!voucherData) return null;
@@ -9,7 +10,7 @@ export default function HandoverVoucherModal({ voucherData, onClose, orgInfo, sy
 
   useEffect(() => {
     if (!orgData || (!orgData.name && !orgData.companyName)) {
-      fetch('/api/settings')
+      fetch(apiUrl('/api/settings'))
         .then(r => r.json())
         .then(data => {
           if (data && data.orgInfo) {
