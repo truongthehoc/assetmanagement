@@ -9,7 +9,7 @@ const fs = require('fs');
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
@@ -162,10 +162,11 @@ app.get('/api/health', (req, res) => {
 // Initialize DB Connection and Start Server
 db.initDB()
     .then(() => {
-        app.listen(PORT, () => {
+        app.listen(PORT, '0.0.0.0', () => {
             console.log(`=======================================================`);
             console.log(` IT Asset Management Backend API Server running on port ${PORT}`);
-            console.log(` API Health Check: http://localhost:${PORT}/api/health`);
+            console.log(` Local Network Access: http://10.30.11.152:${PORT}`);
+            console.log(` API Health Check: http://10.30.11.152:${PORT}/api/health`);
             console.log(`=======================================================`);
         });
     })
