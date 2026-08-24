@@ -5,8 +5,33 @@ const path = require('path');
 let pool = null;
 let isMysqlMode = false;
 
-// Clean Data Store with ZERO mock assets (only master metadata dictionary for departments, locations & users)
+// Master Data Store
 const memoryStore = {
+    khoa: [
+        { id: 1, code: 'K-KHTH', name: 'Phòng Kế Hoạch Tổng Hợp', manager_name: 'BS. CKII Nguyễn Văn A', description: 'Điều phối hoạt động chuyên môn & chỉ đạo tuyến' },
+        { id: 2, code: 'K-CNTT', name: 'Phòng Công Nghệ Thông Tin', manager_name: 'Kỹ Sư Nguyễn Văn Anh', description: 'Quản trị hạ tầng máy chủ, mạng & phần mềm bệnh viện' },
+        { id: 3, code: 'K-NS', name: 'Phòng Tổ Chức Cán Bộ & Nhân Sự', manager_name: 'Trần Thị Bình', description: 'Quản lý hồ sơ nhân sự, tiền lương & đào tạo' },
+        { id: 4, code: 'K-TCKT', name: 'Phòng Tài Chính Kế Toán', manager_name: 'Lê Hoàng Cường', description: 'Quản lý viện phí, thu ngân & tài chính bệnh viện' }
+    ],
+    phong: [
+        { id: 1, code: 'P-IT', name: 'Phòng Máy Chủ & Kỹ Thuật IT', khoa_id: 2, location_address: 'Tòa Nhà A - Tầng 2 (Phòng 201)', manager_name: 'Nguyễn Văn Anh' },
+        { id: 2, code: 'P-NS', name: 'Phòng Tiếp Nhận & Hồ Sơ Nhân Sự', khoa_id: 3, location_address: 'Tòa Nhà A - Tầng 3 (Phòng 305)', manager_name: 'Trần Thị Bình' },
+        { id: 3, code: 'P-KT', name: 'Phòng Kế Toán Thu Ngân', khoa_id: 4, location_address: 'Tòa Nhà B - Tầng 1 (Phòng 102)', manager_name: 'Lê Hoàng Cường' },
+        { id: 4, code: 'P-KHTH', name: 'Phòng Kế Hoạch Nghiệp Vụ', khoa_id: 1, location_address: 'Tòa Nhà A - Tầng 1 (Phòng 101)', manager_name: 'Phạm Minh Dũng' }
+    ],
+    nhan_vien: [
+        { id: 1, employee_id: 'EMP001', full_name: 'Nguyễn Văn Anh', email: 'anh.nguyen@company.com', phone: '0901234567', phong_id: 1, position: 'Trưởng Phòng IT', status: 'ACTIVE' },
+        { id: 2, employee_id: 'EMP002', full_name: 'Trần Thị Bình', email: 'binh.tran@company.com', phone: '0902345678', phong_id: 2, position: 'Chuyên Viên HR', status: 'ACTIVE' },
+        { id: 3, employee_id: 'EMP003', full_name: 'Lê Hoàng Cường', email: 'cuong.le@company.com', phone: '0903456789', phong_id: 3, position: 'Kế Toán Trưởng', status: 'ACTIVE' },
+        { id: 4, employee_id: 'EMP004', full_name: 'Phạm Minh Dũng', email: 'dung.pham@company.com', phone: '0904567890', phong_id: 4, position: 'Cán Bộ Kế Hoạch', status: 'ACTIVE' }
+    ],
+    chuc_danh: [
+        { id: 1, code: 'IT_ADMIN', name: 'Quản Trị Viên Hệ Thống IT', description: 'Phụ trách toàn bộ hệ thống CNTT và an ninh mạng' },
+        { id: 2, code: 'IT_STAFF', name: 'Kỹ Thuật Viên Tin Học', description: 'Hỗ trợ kỹ thuật phần cứng, mạng và máy trạm' },
+        { id: 3, code: 'HR_MANAGER', name: 'Trưởng Phòng Nhân Sự', description: 'Phụ trách tổ chức cán bộ' },
+        { id: 4, code: 'ACC_CHIEF', name: 'Kế Toán Trưởng', description: 'Quản lý tài chính kế toán' },
+        { id: 5, code: 'STAFF', name: 'Cán Bộ / Nhân Viên', description: 'Nhân viên các phòng ban chuyên môn' }
+    ],
     departments: [
         { id: 1, code: 'IT', name: 'Phòng Công nghệ thông tin', manager_name: 'Nguyễn Văn Anh' },
         { id: 2, code: 'HR', name: 'Phòng Nhân sự', manager_name: 'Trần Thị Bình' },
@@ -42,28 +67,35 @@ const memoryStore = {
         { id: 2, code: 'KHO-TB', name: 'Kho Lưu Trữ Vật Tư & Linh Kiện', phong_id: 2, location_address: 'Tòa nhà B - Tầng 1', manager_name: 'Trần Thị Bình', phone: '0902345678', notes: 'Kho bảo lưu thiết bị thay thế và vật tư' }
     ],
     loai_tai_san: [
-        { id: 1, code: 'MAY_IN', name: 'Máy In / Scanner / Photo' },
-        { id: 2, code: 'THIET_BI_MANG', name: 'Switch Mạng / Router / Firewall' },
-        { id: 3, code: 'MAN_HINH', name: 'Màn Hình (Monitor / TV Display)' },
-        { id: 4, code: 'LAPTOP', name: 'Laptop / Máy Tính Xách Tay' },
-        { id: 5, code: 'DESKTOP', name: 'Máy Tính Để Bàn (Desktop PC)' },
-        { id: 6, code: 'SERVER', name: 'Server / Máy Chủ Độc Lập' },
-        { id: 7, code: 'KHAC', name: 'Thiết Bị IT Khác (UPS, Projector, NAS...)' }
+        { id: 1, code: 'MAY_IN', name: 'Máy In / Scanner / Photo', description: 'Thiết bị in ấn, photocopy, scan tài liệu' },
+        { id: 2, code: 'THIET_BI_MANG', name: 'Switch Mạng / Router / Firewall', description: 'Hạ tầng mạng, thiết bị định tuyến, bảo mật' },
+        { id: 3, code: 'MAN_HINH', name: 'Màn Hình (Monitor / TV Display)', description: 'Màn hình máy tính, màn hình hiển thị LCD/LED' },
+        { id: 4, code: 'LAPTOP', name: 'Laptop / Máy Tính Xách Tay', description: 'Máy tính xách tay cá nhân phục vụ công tác' },
+        { id: 5, code: 'DESKTOP', name: 'Máy Tính Để Bàn (Desktop PC)', description: 'Máy trạm, PC để bàn văn phòng' },
+        { id: 6, code: 'SERVER', name: 'Server / Máy Chủ Độc Lập', description: 'Máy chủ vật lý, lưu trữ dữ liệu' },
+        { id: 7, code: 'KHAC', name: 'Thiết Bị IT Khác (UPS, Projector, NAS...)', description: 'Bộ lưu điện UPS, máy chiếu, thiết bị ngoại vi' }
+    ],
+    trang_thai_tai_san: [
+        { id: 1, code: 'IN_STOCK', name: 'Trong Kho (Chờ Cấp Phát)', description: 'Thiết bị mới nhập kho, chưa được gán cho người sử dụng', color_badge: 'blue' },
+        { id: 2, code: 'IN_USE', name: 'Đang Sử Dụng', description: 'Thiết bị đã được cấp phát và đang được sử dụng bởi nhân viên', color_badge: 'green' },
+        { id: 3, code: 'BACKUP', name: 'Dự Phòng', description: 'Thiết bị dự phòng, sẵn sàng thay thế khi cần', color_badge: 'cyan' },
+        { id: 4, code: 'REPAIR', name: 'Đang Bảo Trì / Sửa Chữa', description: 'Thiết bị đang trong quá trình bảo trì hoặc sửa chữa', color_badge: 'orange' },
+        { id: 5, code: 'DISPOSED', name: 'Đã Thanh Lý / Hủy', description: 'Thiết bị đã được thanh lý hoặc loại bỏ khỏi hệ thống', color_badge: 'red' }
     ]
 };
 
 async function initDB() {
-    try {
-        const targetDbName = process.env.DB_NAME || 'asset_management';
-        const dbConfig = {
-            host: process.env.DB_HOST || 'localhost',
-            user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'bvdktnBD@152',
-            database: targetDbName,
-            port: parseInt(process.env.DB_PORT || '3306'),
-            multipleStatements: true
-        };
+    const targetDbName = process.env.DB_NAME || 'asset_management';
+    const dbConfig = {
+        host: process.env.DB_HOST || 'localhost',
+        user: process.env.DB_USER || 'root',
+        password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'bvdktnBD@152',
+        database: targetDbName,
+        port: parseInt(process.env.DB_PORT || '3306'),
+        multipleStatements: true
+    };
 
+    try {
         const connection = await mysql.createConnection({
             host: dbConfig.host,
             user: dbConfig.user,
@@ -71,7 +103,7 @@ async function initDB() {
             port: dbConfig.port
         });
 
-        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\`;`);
+        await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
         await connection.end();
 
         pool = mysql.createPool({
@@ -81,21 +113,305 @@ async function initDB() {
             queueLimit: 0
         });
 
-        // Always run schema.sql to ensure ALL tables exist (uses CREATE TABLE IF NOT EXISTS, safe to re-run)
-        console.log('Ensuring all MySQL tables exist...');
-        const schemaPath = path.join(__dirname, '../../../database/schema.sql');
-        if (fs.existsSync(schemaPath)) {
-            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-            await pool.query(schemaSql).catch(e => {
-                console.warn('Schema init warning (some statements may have been skipped):', e.message);
+        console.log('🔄 Dang kiem tra va khoi tao schema bang MySQL...');
+
+        // Create every table individually with CREATE TABLE IF NOT EXISTS
+        const tableDDLs = [
+            `CREATE TABLE IF NOT EXISTS departments (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                manager_name VARCHAR(100),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS locations (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                building VARCHAR(100) NOT NULL,
+                floor VARCHAR(50) NOT NULL,
+                room VARCHAR(100) NOT NULL,
+                description VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employee_id VARCHAR(50) UNIQUE NOT NULL,
+                full_name VARCHAR(255) NOT NULL,
+                email VARCHAR(255) UNIQUE,
+                phone VARCHAR(50),
+                department_id INT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS devices_pending (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                agent_id VARCHAR(100) UNIQUE NOT NULL,
+                hostname VARCHAR(255) NOT NULL,
+                domain_workgroup VARCHAR(100),
+                os_name VARCHAR(255),
+                ip_address VARCHAR(100),
+                mac_address VARCHAR(100),
+                serial_number VARCHAR(100),
+                hardware_json LONGTEXT,
+                software_json LONGTEXT,
+                first_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+                last_seen DATETIME DEFAULT CURRENT_TIMESTAMP,
+                status ENUM('PENDING', 'APPROVED', 'REJECTED') DEFAULT 'PENDING'
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS assets (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                asset_tag VARCHAR(100) UNIQUE NOT NULL,
+                qr_code VARCHAR(255) UNIQUE NOT NULL,
+                agent_id VARCHAR(100) UNIQUE,
+                hostname VARCHAR(255) NOT NULL,
+                asset_type VARCHAR(255) DEFAULT 'Desktop',
+                status VARCHAR(50) DEFAULT 'IN_USE',
+                department_id INT,
+                location_id INT,
+                user_id INT,
+                serial_number VARCHAR(100),
+                mainboard_model VARCHAR(255),
+                cpu_model VARCHAR(255),
+                ram_total_gb INT,
+                disk_total_gb INT,
+                gpu_model VARCHAR(255),
+                os_info VARCHAR(255),
+                baseline_snapshot LONGTEXT,
+                current_snapshot LONGTEXT,
+                purchase_date DATE,
+                purchase_cost DECIMAL(15,2) NULL,
+                depreciation_months INT DEFAULT 36,
+                vendor_supplier VARCHAR(255) NULL,
+                warranty_expiration_date DATE NULL,
+                po_document_url TEXT NULL,
+                previous_status VARCHAR(50) NULL,
+                notes TEXT NULL,
+                warranty_months INT DEFAULT 24,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS asset_ram_slots (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                asset_id INT NOT NULL,
+                slot_name VARCHAR(50),
+                capacity_gb INT,
+                manufacturer VARCHAR(100),
+                serial_number VARCHAR(100),
+                bus_speed VARCHAR(50)
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS asset_disks (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                asset_id INT NOT NULL,
+                model VARCHAR(255),
+                serial_number VARCHAR(100),
+                size_gb INT,
+                interface_type VARCHAR(50)
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS asset_software (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                asset_id INT NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                version VARCHAR(100),
+                publisher VARCHAR(255),
+                install_date VARCHAR(50),
+                license_key VARCHAR(255),
+                is_whitelisted BOOLEAN DEFAULT TRUE
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS drift_alerts (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                asset_id INT NOT NULL,
+                alert_type VARCHAR(100) NOT NULL,
+                severity VARCHAR(50) DEFAULT 'MEDIUM',
+                title VARCHAR(255) NOT NULL,
+                details TEXT,
+                is_resolved BOOLEAN DEFAULT FALSE,
+                resolved_by VARCHAR(100),
+                resolved_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS lifecycle_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                asset_id INT NOT NULL,
+                action VARCHAR(100) NOT NULL,
+                from_user_id INT,
+                to_user_id INT,
+                from_status VARCHAR(50),
+                to_status VARCHAR(50),
+                notes TEXT,
+                performed_by VARCHAR(100) DEFAULT 'Admin',
+                document_signature TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS maintenance_schedules (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                asset_id INT NOT NULL,
+                task_name VARCHAR(255) NOT NULL,
+                frequency_months INT DEFAULT 6,
+                last_performed DATE,
+                next_due DATE NOT NULL,
+                status VARCHAR(50) DEFAULT 'PENDING',
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS inventory_audits (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                audit_date DATE NOT NULL,
+                auditor_name VARCHAR(100),
+                status VARCHAR(50) DEFAULT 'IN_PROGRESS',
+                total_scanned INT DEFAULT 0,
+                mismatch_count INT DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS audit_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                audit_id INT NOT NULL,
+                asset_id INT NOT NULL,
+                scanned_location_id INT,
+                scanned_user_id INT,
+                status VARCHAR(50) DEFAULT 'MATCHED',
+                notes TEXT,
+                scanned_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS nha_cung_cap (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                contact_person VARCHAR(100),
+                phone VARCHAR(50),
+                email VARCHAR(100),
+                address VARCHAR(255),
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS khoa (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                manager_name VARCHAR(100),
+                description TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS phong (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                khoa_id INT NOT NULL,
+                location_address VARCHAR(255),
+                manager_name VARCHAR(100),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS nhan_vien (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                employee_id VARCHAR(50) UNIQUE NOT NULL,
+                full_name VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                phone VARCHAR(50),
+                phong_id INT,
+                position VARCHAR(100),
+                status VARCHAR(20) DEFAULT 'ACTIVE',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS chuc_danh (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS loai_tai_san (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS trang_thai_tai_san (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                description TEXT,
+                color_badge VARCHAR(50) DEFAULT 'blue',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS kho_luu_tru (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                phong_id INT,
+                location_address VARCHAR(255),
+                manager_name VARCHAR(100),
+                phone VARCHAR(50),
+                notes TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS system_users (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                username VARCHAR(100) UNIQUE NOT NULL,
+                full_name VARCHAR(255) NOT NULL,
+                email VARCHAR(255),
+                phone VARCHAR(50),
+                employee_id VARCHAR(50),
+                role VARCHAR(50) DEFAULT 'STAFF',
+                department_name VARCHAR(255),
+                job_title VARCHAR(255) DEFAULT '',
+                avatar_url VARCHAR(500) DEFAULT '',
+                status VARCHAR(20) DEFAULT 'ACTIVE',
+                auth_method VARCHAR(50) DEFAULT 'LOCAL',
+                last_login VARCHAR(100) DEFAULT 'Chưa đăng nhập',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS system_settings (
+                setting_key VARCHAR(50) PRIMARY KEY,
+                setting_value LONGTEXT NOT NULL,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`,
+
+            `CREATE TABLE IF NOT EXISTS permission_matrix (
+                role_name VARCHAR(50) PRIMARY KEY,
+                permissions_json JSON NOT NULL,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;`
+        ];
+
+        for (const ddl of tableDDLs) {
+            await pool.query(ddl).catch(err => {
+                console.warn('Table create notice:', err.message);
             });
         }
 
-        await pool.query('SELECT 1');
-        
-        // Ensure new columns exist on MySQL assets table (migrations)
+        // Run migrations for existing columns
         const migrations = [
             "ALTER TABLE assets MODIFY COLUMN asset_type VARCHAR(255) NULL DEFAULT 'Thiết bị IT'",
+            "ALTER TABLE assets MODIFY COLUMN status VARCHAR(50) NULL DEFAULT 'IN_USE'",
             "ALTER TABLE assets ADD COLUMN purchase_cost DECIMAL(15,2) NULL",
             "ALTER TABLE assets ADD COLUMN depreciation_months INT DEFAULT 36",
             "ALTER TABLE assets ADD COLUMN vendor_supplier VARCHAR(255) NULL",
@@ -108,9 +424,81 @@ async function initDB() {
             await pool.query(m).catch(() => {});
         }
 
+        // Seed default records if empty
+        // 1. Seed loai_tai_san
+        const [loaiRows] = await pool.query('SELECT COUNT(*) as cnt FROM loai_tai_san');
+        if (loaiRows[0]?.cnt === 0) {
+            for (const item of memoryStore.loai_tai_san) {
+                await pool.query('INSERT IGNORE INTO loai_tai_san (id, code, name, description) VALUES (?, ?, ?, ?)', [item.id, item.code, item.name, item.description]).catch(() => {});
+            }
+        }
+
+        // 2. Seed trang_thai_tai_san
+        const [trangThaiRows] = await pool.query('SELECT COUNT(*) as cnt FROM trang_thai_tai_san');
+        if (trangThaiRows[0]?.cnt === 0) {
+            for (const item of memoryStore.trang_thai_tai_san) {
+                await pool.query('INSERT IGNORE INTO trang_thai_tai_san (id, code, name, description, color_badge) VALUES (?, ?, ?, ?, ?)', [item.id, item.code, item.name, item.description, item.color_badge]).catch(() => {});
+            }
+        }
+
+        // 3. Seed khoa
+        const [khoaRows] = await pool.query('SELECT COUNT(*) as cnt FROM khoa');
+        if (khoaRows[0]?.cnt === 0) {
+            for (const item of memoryStore.khoa) {
+                await pool.query('INSERT IGNORE INTO khoa (id, code, name, manager_name, description) VALUES (?, ?, ?, ?, ?)', [item.id, item.code, item.name, item.manager_name, item.description]).catch(() => {});
+            }
+        }
+
+        // 4. Seed phong
+        const [phongRows] = await pool.query('SELECT COUNT(*) as cnt FROM phong');
+        if (phongRows[0]?.cnt === 0) {
+            for (const item of memoryStore.phong) {
+                await pool.query('INSERT IGNORE INTO phong (id, code, name, khoa_id, location_address, manager_name) VALUES (?, ?, ?, ?, ?, ?)', [item.id, item.code, item.name, item.khoa_id, item.location_address, item.manager_name]).catch(() => {});
+            }
+        }
+
+        // 5. Seed nhan_vien
+        const [nhanVienRows] = await pool.query('SELECT COUNT(*) as cnt FROM nhan_vien');
+        if (nhanVienRows[0]?.cnt === 0) {
+            for (const item of memoryStore.nhan_vien) {
+                await pool.query('INSERT IGNORE INTO nhan_vien (id, employee_id, full_name, email, phone, phong_id, position, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [item.id, item.employee_id, item.full_name, item.email, item.phone, item.phong_id, item.position, item.status]).catch(() => {});
+            }
+        }
+
+        // 6. Seed chuc_danh
+        const [chucDanhRows] = await pool.query('SELECT COUNT(*) as cnt FROM chuc_danh');
+        if (chucDanhRows[0]?.cnt === 0) {
+            for (const item of memoryStore.chuc_danh) {
+                await pool.query('INSERT IGNORE INTO chuc_danh (id, code, name, description) VALUES (?, ?, ?, ?)', [item.id, item.code, item.name, item.description]).catch(() => {});
+            }
+        }
+
+        // 7. Seed nha_cung_cap
+        const [nccRows] = await pool.query('SELECT COUNT(*) as cnt FROM nha_cung_cap');
+        if (nccRows[0]?.cnt === 0) {
+            for (const item of memoryStore.nha_cung_cap) {
+                await pool.query('INSERT IGNORE INTO nha_cung_cap (id, code, name, contact_person, phone, email, address, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [item.id, item.code, item.name, item.contact_person, item.phone, item.email, item.address, item.notes]).catch(() => {});
+            }
+        }
+
+        // 8. Seed kho_luu_tru
+        const [khoLuuTruRows] = await pool.query('SELECT COUNT(*) as cnt FROM kho_luu_tru');
+        if (khoLuuTruRows[0]?.cnt === 0) {
+            for (const item of memoryStore.kho_luu_tru) {
+                await pool.query('INSERT IGNORE INTO kho_luu_tru (id, code, name, phong_id, location_address, manager_name, phone, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [item.id, item.code, item.name, item.phong_id, item.location_address, item.manager_name, item.phone, item.notes]).catch(() => {});
+            }
+        }
+
+        // 9. Seed default admin user
+        await pool.query(`
+            INSERT IGNORE INTO system_users (id, username, full_name, email, phone, employee_id, role, department_name, job_title, status, auth_method, last_login)
+            VALUES (1, 'admin_system', 'Admin System', 'admin@company.com', '0901234567', 'SYS001', 'ADMIN', 'Công Nghệ Thông Tin (IT Central)', 'Quản Trị Viên Hệ Thống', 'ACTIVE', 'LOCAL', 'Vừa xong')
+        `).catch(() => {});
+
         isMysqlMode = true;
         console.log(`=======================================================`);
         console.log(` ✅ KET NOI THANH CONG MYSQL DATABASE: [${dbConfig.database}]`);
+        console.log(`    Tat ca cac bang Master Data da duoc dong bo san sang!`);
         console.log(`=======================================================`);
     } catch (err) {
         console.error(`=======================================================`);
@@ -122,7 +510,7 @@ async function initDB() {
 }
 
 async function query(sql, params = []) {
-    if (isMysqlMode) {
+    if (isMysqlMode && pool) {
         const [rows] = await pool.query(sql, params);
         return rows;
     } else {
@@ -134,13 +522,46 @@ function handleMemoryQuery(sql, params) {
     const s = sql.trim();
     const upper = s.toUpperCase();
 
-    if (upper.includes('FROM DEPARTMENTS') || upper.includes('FROM PHONG')) {
+    if (upper.includes('FROM KHOA')) {
+        return memoryStore.khoa;
+    }
+
+    if (upper.includes('FROM PHONG')) {
+        return memoryStore.phong.map(p => {
+            const k = memoryStore.khoa.find(item => item.id === p.khoa_id) || {};
+            return { ...p, khoa_name: k.name, khoa_code: k.code, building: k.name, room: p.name };
+        });
+    }
+
+    if (upper.includes('FROM NHAN_VIEN')) {
+        return memoryStore.nhan_vien.map(nv => {
+            const p = memoryStore.phong.find(item => item.id === nv.phong_id) || {};
+            const k = memoryStore.khoa.find(item => item.id === p.khoa_id) || {};
+            return { ...nv, phong_name: p.name, phong_code: p.code, location_address: p.location_address, khoa_id: k.id, khoa_name: k.name, khoa_code: k.code };
+        });
+    }
+
+    if (upper.includes('FROM CHUC_DANH')) {
+        return memoryStore.chuc_danh.map(cd => ({
+            ...cd,
+            total_employees: memoryStore.nhan_vien.filter(nv => nv.position === cd.name || nv.position === cd.code).length
+        }));
+    }
+
+    if (upper.includes('FROM TRANG_THAI_TAI_SAN')) {
+        return memoryStore.trang_thai_tai_san.map(t => ({
+            ...t,
+            total_assets: memoryStore.assets.filter(a => a.status === t.code).length
+        }));
+    }
+
+    if (upper.includes('FROM DEPARTMENTS')) {
         return memoryStore.departments.map(d => ({ ...d, location_address: d.name, khoa_id: 1 }));
     }
-    if (upper.includes('FROM LOCATIONS') || upper.includes('FROM KHOA')) {
+    if (upper.includes('FROM LOCATIONS')) {
         return memoryStore.locations.map(l => ({ ...l, name: l.room, building: l.building, room: l.room, location_address: l.room }));
     }
-    if (upper.includes('FROM USERS') || upper.includes('FROM NHAN_VIEN')) {
+    if (upper.includes('FROM USERS')) {
         return memoryStore.users.map(u => ({ ...u, phong_id: u.department_id || 1, phong_name: 'Công nghệ thông tin', khoa_name: 'Khối Kỹ Thuật' }));
     }
 

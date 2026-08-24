@@ -123,7 +123,8 @@ export default function App() {
         link.rel = 'icon';
         document.getElementsByTagName('head')[0].appendChild(link);
       }
-      link.href = faviconUrl;
+      const targetUrl = faviconUrl.startsWith('http') ? faviconUrl : apiUrl(faviconUrl);
+      link.href = targetUrl;
     } catch (e) {
       console.error('Error updating favicon:', e);
     }
