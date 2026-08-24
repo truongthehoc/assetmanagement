@@ -18,22 +18,22 @@ import {
   X, 
   Check, 
   Laptop, 
+  Briefcase, 
   Shield, 
+  UserCheck, 
   Eye, 
-  EyeOff,
-  UserCheck,
-  BadgeCheck,
-  Save,
   RotateCcw,
-  Sliders,
-  Grid,
-  AlertCircle,
-  Package,
-  Radio,
+  Sparkles,
+  HelpCircle,
   AlertTriangle,
-  Layers,
-  Settings
+  FolderTree,
+  Monitor,
+  Radio,
+  QrCode,
+  Settings,
+  ChevronDown
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function UsersManagement({ metadata = { departments: [], users: [] }, theme }) {
   const isLight = theme === 'light';
@@ -52,7 +52,7 @@ export default function UsersManagement({ metadata = { departments: [], users: [
 
   // Fetch employees from API on mount
   useEffect(() => {
-    fetch('/api/employees')
+    fetch(apiUrl('/api/employees'))
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -124,7 +124,7 @@ export default function UsersManagement({ metadata = { departments: [], users: [
 
   // Fetch users from API on mount
   useEffect(() => {
-    fetch('/api/users')
+    fetch(apiUrl('/api/users'))
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -171,7 +171,7 @@ export default function UsersManagement({ metadata = { departments: [], users: [
   const [matrixSaveSuccess, setMatrixSaveSuccess] = useState(false);
 
   useEffect(() => {
-    fetch('/api/permissions/matrix')
+    fetch(apiUrl('/api/permissions/matrix'))
       .then(res => res.json())
       .then(data => {
         if (data && typeof data === 'object' && Object.keys(data).length > 0) {
@@ -198,7 +198,7 @@ export default function UsersManagement({ metadata = { departments: [], users: [
   const handleSaveMatrix = async () => {
     setSavingMatrix(true);
     try {
-      const res = await fetch('/api/permissions/matrix', {
+      const res = await fetch(apiUrl('/api/permissions/matrix'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(matrixData)
@@ -414,7 +414,7 @@ export default function UsersManagement({ metadata = { departments: [], users: [
 
     try {
       if (editingUser) {
-        const res = await fetch(`/api/users/${editingUser.id}`, {
+        const res = await fetch(apiUrl(`/api/users/${editingUser.id}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -426,7 +426,7 @@ export default function UsersManagement({ metadata = { departments: [], users: [
           alert(data.error || 'Có lỗi khi cập nhật tài khoản');
         }
       } else {
-        const res = await fetch('/api/users', {
+        const res = await fetch(apiUrl('/api/users'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(formData)
@@ -460,7 +460,7 @@ export default function UsersManagement({ metadata = { departments: [], users: [
     }));
 
     try {
-      await fetch(`/api/users/${userId}/toggle-status`, { method: 'PATCH' });
+      await fetch(apiUrl(`/api/users/${userId}/toggle-status`), { method: 'PATCH' });
     } catch (e) {
       console.warn('Toggle status API error:', e);
     }
@@ -475,7 +475,7 @@ export default function UsersManagement({ metadata = { departments: [], users: [
       setConfirmDeleteModal(null);
 
       try {
-        await fetch(`/api/users/${targetId}`, { method: 'DELETE' });
+        await fetch(apiUrl(`/api/users/${targetId}`), { method: 'DELETE' });
       } catch (e) {
         console.warn('Delete user API error:', e);
       }

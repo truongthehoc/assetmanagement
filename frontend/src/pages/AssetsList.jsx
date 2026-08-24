@@ -26,16 +26,23 @@ import {
   TrendingDown,
   Wrench,
   ShieldAlert,
+  ArrowRightLeft,
   CheckCircle2,
+  AlertTriangle,
   Package,
   Bot,
   PenTool,
   Monitor,
   Laptop,
   Layers,
-  Server
+  Server,
+  Warehouse,
+  Truck,
+  Sparkles
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import HandoverVoucherModal from '../components/HandoverVoucherModal';
+import { apiUrl } from '../utils/api';
 
 // Custom Searchable Employee Combobox Select Component with Click-Outside Close Hook
 function SearchableEmployeeSelect({ employees, value, onChange, placeholder, isLight }) {
@@ -311,9 +318,9 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
   const fetchFreshMetadata = async () => {
     try {
       const [resMeta, resWh, resTypes] = await Promise.all([
-        fetch('/api/assets/metadata').then(r => r.json()),
-        fetch('/api/kho-luu-tru').then(r => r.json()),
-        fetch('/api/loai-tai-san').then(r => r.json())
+        fetch(apiUrl('/api/assets/metadata')).then(r => r.json()),
+        fetch(apiUrl('/api/kho-luu-tru')).then(r => r.json()),
+        fetch(apiUrl('/api/loai-tai-san')).then(r => r.json())
       ]);
       const fresh = {
         departments: resMeta.departments || [],
@@ -374,7 +381,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
     const finalAssetType = mAssetType || (localMeta.assetTypes?.[0]?.name) || 'Máy In / Scanner / Photo';
 
     try {
-      const res = await fetch('/api/assets', {
+      const res = await fetch(apiUrl('/api/assets'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -418,7 +425,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
   const isLight = theme === 'light';
 
   useEffect(() => {
-    fetch('/api/khoa')
+    fetch(apiUrl('/api/khoa'))
       .then(r => r.json())
       .then(data => setKhoaList(Array.isArray(data) ? data : []))
       .catch(err => console.error(err));
@@ -645,7 +652,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
     const finalLocId = !isNaN(parsedLocId) ? parsedLocId : (metadata.locations[0]?.id || null);
 
     try {
-      const res = await fetch('/api/lifecycle/transfer', {
+      const res = await fetch(apiUrl('/api/lifecycle/transfer'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
