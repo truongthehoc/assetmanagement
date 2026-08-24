@@ -137,9 +137,9 @@ async function ensureTable() {
       await db.query(`ALTER TABLE system_users ADD COLUMN job_title VARCHAR(255) DEFAULT ''`);
     } catch (e) {}
 
-    // Check if table is empty
-    const rows = await db.query('SELECT COUNT(*) as count FROM system_users');
-    if (rows && (rows[0].count === 0 || rows[0].COUNT === 0)) {
+    // Check if initial admin user exists in MySQL
+    const adminRows = await db.query("SELECT id FROM system_users WHERE username = 'admin_system'");
+    if (!adminRows || adminRows.length === 0) {
       for (const u of defaultSystemUsers) {
         await db.query(
           `INSERT IGNORE INTO system_users (id, username, full_name, email, phone, employee_id, role, department_name, job_title, avatar_url, status, auth_method, last_login)
@@ -159,7 +159,7 @@ async function getUsers(req, res) {
     await ensureTable();
     try {
       const dbRows = await db.query('SELECT * FROM system_users ORDER BY id DESC');
-      if (dbRows && dbRows.length > 0) {
+      if (Array.isArray(dbRows)) {
         const mapped = dbRows.map(r => ({
           id: r.id,
           username: r.username,
