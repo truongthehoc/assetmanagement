@@ -19,8 +19,12 @@ call npm install
 call npm run build
 
 echo.
-echo  [3/3] RESTART IIS WEB SERVER CACHE...
-call iisreset /noforce >nul 2>&1
+echo  [3/3] DAM BAO DICH VU IIS DANG CHAY & LAM MOI CACHE...
+call net start w3svc >nul 2>&1
+call iisreset /start >nul 2>&1
+if exist "%windir%\system32\inetsrv\appcmd.exe" (
+    call "%windir%\system32\inetsrv\appcmd.exe" recycle apppool >nul 2>&1
+)
 
 echo.
 echo ======================================================================
