@@ -32,7 +32,8 @@ import {
   QrCode,
   Settings,
   ChevronDown,
-  Package
+  Package,
+  Layers
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
 
