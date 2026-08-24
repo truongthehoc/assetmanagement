@@ -8,6 +8,7 @@ import {
   X, 
   Users
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function ChucDanh({ theme }) {
   const [chucDanhList, setChucDanhList] = useState([]);
@@ -25,7 +26,7 @@ export default function ChucDanh({ theme }) {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('/api/chuc-danh');
+      const res = await fetch(apiUrl('/api/chuc-danh'));
       if (res.ok) {
         const data = await res.json();
         setChucDanhList(Array.isArray(data) ? data : []);
@@ -62,13 +63,13 @@ export default function ChucDanh({ theme }) {
     const payload = { code, name, description };
 
     if (editingItem) {
-      await fetch(`/api/chuc-danh/${editingItem.id}`, {
+      await fetch(apiUrl(`/api/chuc-danh/${editingItem.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      await fetch('/api/chuc-danh', {
+      await fetch(apiUrl('/api/chuc-danh'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -81,7 +82,7 @@ export default function ChucDanh({ theme }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa Chức danh / Chức vụ này?')) return;
-    await fetch(`/api/chuc-danh/${id}`, { method: 'DELETE' });
+    await fetch(apiUrl(`/api/chuc-danh/${id}`), { method: 'DELETE' });
     await fetchData();
   };
 

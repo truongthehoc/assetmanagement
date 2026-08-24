@@ -17,6 +17,7 @@ import {
   Radio,
   AlertTriangle
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function SystemSettings({ theme, onSettingsUpdated }) {
   const isLight = theme === 'light';
@@ -58,7 +59,7 @@ export default function SystemSettings({ theme, onSettingsUpdated }) {
 
   // Fetch saved settings from backend server on mount
   useEffect(() => {
-    fetch('/api/settings')
+    fetch(apiUrl('/api/settings'))
       .then(res => res.json())
       .then(data => {
         if (data) {
@@ -76,7 +77,7 @@ export default function SystemSettings({ theme, onSettingsUpdated }) {
   const handleSaveAll = async (e) => {
     if (e) e.preventDefault();
     try {
-      const res = await fetch('/api/settings', {
+      const res = await fetch(apiUrl('/api/settings'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orgInfo, systemInfo, config })
@@ -112,7 +113,7 @@ export default function SystemSettings({ theme, onSettingsUpdated }) {
       try {
         const ext = file.name.split('.').pop() || 'png';
         const filename = `logo_${Date.now()}.${ext}`;
-        const res = await fetch('/api/upload', {
+        const res = await fetch(apiUrl('/api/upload'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename, fileData: reader.result })
@@ -142,7 +143,7 @@ export default function SystemSettings({ theme, onSettingsUpdated }) {
       try {
         const ext = file.name.split('.').pop() || 'png';
         const filename = `favicon_${Date.now()}.${ext}`;
-        const res = await fetch('/api/upload', {
+        const res = await fetch(apiUrl('/api/upload'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ filename, fileData: reader.result })

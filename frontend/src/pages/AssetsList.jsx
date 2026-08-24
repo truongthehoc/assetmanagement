@@ -613,7 +613,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
                            ((finishMaintenanceModalAsset.user_id || finishMaintenanceModalAsset.department_id) ? 'IN_USE' : 'READY');
 
     try {
-      await fetch(`/api/assets/${finishMaintenanceModalAsset.id}/procurement`, {
+      await fetch(apiUrl(`/api/assets/${finishMaintenanceModalAsset.id}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -686,7 +686,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
     const fileListString = poFiles.map(f => f.name).join(',');
 
     try {
-      await fetch(`/api/assets/${editDrawerAsset.id}/procurement`, {
+      await fetch(apiUrl(`/api/assets/${editDrawerAsset.id}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -716,7 +716,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
     if (!disposalDrawerAsset) return;
 
     try {
-      const res = await fetch(`/api/assets/${disposalDrawerAsset.id}/procurement`, {
+      const res = await fetch(apiUrl(`/api/assets/${disposalDrawerAsset.id}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -744,7 +744,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
     if (!maintenanceDrawerAsset) return;
 
     try {
-      const res = await fetch(`/api/assets/${maintenanceDrawerAsset.id}/procurement`, {
+      const res = await fetch(apiUrl(`/api/assets/${maintenanceDrawerAsset.id}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

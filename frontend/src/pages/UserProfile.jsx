@@ -16,6 +16,7 @@ import {
   BadgeCheck,
   Briefcase
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function UserProfile({ theme, onUserUpdated }) {
   const isLight = theme === 'light';
@@ -58,7 +59,7 @@ export default function UserProfile({ theme, onUserUpdated }) {
         let parsed = saved ? JSON.parse(saved) : null;
         const targetUsername = parsed?.username || 'admin_system';
 
-        const res = await fetch(`/api/users/profile?username=${targetUsername}`);
+        const res = await fetch(apiUrl(`/api/users/profile?username=${targetUsername}`));
         if (res.ok) {
           const serverData = await res.json();
           if (serverData && serverData.username) {
@@ -115,7 +116,7 @@ export default function UserProfile({ theme, onUserUpdated }) {
 
         try {
           // 2. Upload image file to Backend Server /api/upload
-          const res = await fetch('/api/upload', {
+          const res = await fetch(apiUrl('/api/upload'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ filename: cleanName, fileData: base64Data })
@@ -129,7 +130,7 @@ export default function UserProfile({ theme, onUserUpdated }) {
           setProfile(updated);
           localStorage.setItem('app_user_profile', JSON.stringify(updated));
 
-          await fetch('/api/users/profile', {
+          await fetch(apiUrl('/api/users/profile'), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -173,7 +174,7 @@ export default function UserProfile({ theme, onUserUpdated }) {
       localStorage.setItem('app_user_profile', JSON.stringify(profile));
 
       // Save to Backend Database
-      await fetch('/api/users/profile', {
+      await fetch(apiUrl('/api/users/profile'), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

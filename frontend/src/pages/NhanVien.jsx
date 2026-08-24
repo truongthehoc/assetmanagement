@@ -12,6 +12,7 @@ import {
   Phone, 
   Briefcase
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function NhanVien({ theme }) {
   const [employees, setEmployees] = useState([]);
@@ -41,10 +42,10 @@ export default function NhanVien({ theme }) {
   const fetchData = async () => {
     try {
       const [resEmp, resKhoa, resPhong, resCd] = await Promise.all([
-        fetch('/api/employees').then(r => r.json()),
-        fetch('/api/khoa').then(r => r.json()),
-        fetch('/api/phong').then(r => r.json()),
-        fetch('/api/chuc-danh').then(r => r.json())
+        fetch(apiUrl('/api/employees')).then(r => r.json()),
+        fetch(apiUrl('/api/khoa')).then(r => r.json()),
+        fetch(apiUrl('/api/phong')).then(r => r.json()),
+        fetch(apiUrl('/api/chuc-danh')).then(r => r.json())
       ]);
       setEmployees(Array.isArray(resEmp) ? resEmp : []);
       setKhoaList(Array.isArray(resKhoa) ? resKhoa : []);
@@ -117,13 +118,13 @@ export default function NhanVien({ theme }) {
     };
 
     if (editingEmp) {
-      await fetch(`/api/employees/${editingEmp.id}`, {
+      await fetch(apiUrl(`/api/employees/${editingEmp.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      await fetch('/api/employees', {
+      await fetch(apiUrl('/api/employees'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -138,7 +139,7 @@ export default function NhanVien({ theme }) {
   const handleToggleStatus = async (emp) => {
     const newStatus = emp.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
-      await fetch(`/api/employees/${emp.id}/toggle-status`, {
+      await fetch(apiUrl(`/api/employees/${emp.id}/toggle-status`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -151,7 +152,7 @@ export default function NhanVien({ theme }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) return;
-    await fetch(`/api/employees/${id}`, { method: 'DELETE' });
+    await fetch(apiUrl(`/api/employees/${id}`), { method: 'DELETE' });
     await fetchData();
   };
 

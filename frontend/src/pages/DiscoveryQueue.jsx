@@ -33,6 +33,7 @@ import {
   Calendar
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
+import { apiUrl } from '../utils/api';
 
 // Custom DatePicker Component displaying strictly dd/mm/yyyy format in the input field
 function DatePickerVN({ value, onChange, isLight }) {
@@ -136,7 +137,7 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
 
     setDeletingId(devId);
     try {
-      const res = await fetch(`/api/discovery/${devId}`, { method: 'DELETE' });
+      const res = await fetch(apiUrl(`/api/discovery/${devId}`), { method: 'DELETE' });
       if (res.ok) {
         if (onTriggerScan) await onTriggerScan();
       }
@@ -152,7 +153,7 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
 
     setClearingAll(true);
     try {
-      const res = await fetch('/api/discovery/clear-all', { method: 'DELETE' });
+      const res = await fetch(apiUrl('/api/discovery/clear-all'), { method: 'DELETE' });
       if (res.ok) {
         setCurrentPage(1);
         if (onTriggerScan) await onTriggerScan();
@@ -169,7 +170,7 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
     setNetScanResult(null);
     setNetScanError(null);
     try {
-      const res = await fetch('/api/discovery/subnets');
+      const res = await fetch(apiUrl('/api/discovery/subnets'));
       if (res.ok) {
         const data = await res.json();
         setSubnets(data);
@@ -189,7 +190,7 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
     setNetScanResult(null);
     setNetScanError(null);
     try {
-      const res = await fetch('/api/discovery/scan-network', {
+      const res = await fetch(apiUrl('/api/discovery/scan-network'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

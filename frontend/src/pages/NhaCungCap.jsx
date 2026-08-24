@@ -14,6 +14,7 @@ import {
   FileText,
   Building
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function NhaCungCap({ theme }) {
   const [suppliers, setSuppliers] = useState([]);
@@ -41,7 +42,7 @@ export default function NhaCungCap({ theme }) {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('/api/nha-cung-cap');
+      const res = await fetch(apiUrl('/api/nha-cung-cap'));
       const data = await res.json();
       setSuppliers(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -95,13 +96,13 @@ export default function NhaCungCap({ theme }) {
 
     try {
       if (editingSupplier) {
-        await fetch(`/api/nha-cung-cap/${editingSupplier.id}`, {
+        await fetch(apiUrl(`/api/nha-cung-cap/${editingSupplier.id}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
       } else {
-        await fetch('/api/nha-cung-cap', {
+        await fetch(apiUrl('/api/nha-cung-cap'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -122,7 +123,7 @@ export default function NhaCungCap({ theme }) {
   const handleDelete = async () => {
     if (!deletingSupplier) return;
     try {
-      await fetch(`/api/nha-cung-cap/${deletingSupplier.id}`, { method: 'DELETE' });
+      await fetch(apiUrl(`/api/nha-cung-cap/${deletingSupplier.id}`), { method: 'DELETE' });
       setDeleteModal(false);
       setDeletingSupplier(null);
       fetchData();

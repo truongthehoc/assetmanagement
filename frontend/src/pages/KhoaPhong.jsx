@@ -10,6 +10,7 @@ import {
   UserCheck,
   ChevronDown
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 // Custom Searchable Employee Combobox Select Component with Clear Button & Empty Option
 function SearchableEmployeeSelect({ employees, value, onChange, placeholder, isLight }) {
@@ -170,9 +171,9 @@ export default function KhoaPhong({ theme }) {
   const fetchData = async () => {
     try {
       const [resKhoa, resPhong, resEmp] = await Promise.all([
-        fetch('/api/khoa').then(r => r.json()),
-        fetch('/api/phong').then(r => r.json()),
-        fetch('/api/employees').then(r => r.json())
+        fetch(apiUrl('/api/khoa')).then(r => r.json()),
+        fetch(apiUrl('/api/phong')).then(r => r.json()),
+        fetch(apiUrl('/api/employees')).then(r => r.json())
       ]);
       setKhoaList(Array.isArray(resKhoa) ? resKhoa : []);
       setPhongList(Array.isArray(resPhong) ? resPhong : []);
@@ -212,13 +213,13 @@ export default function KhoaPhong({ theme }) {
     const payload = { code: khoaCode, name: khoaName, managerName: khoaManager || null, description: khoaDesc };
 
     if (editingKhoa) {
-      await fetch(`/api/khoa/${editingKhoa.id}`, {
+      await fetch(apiUrl(`/api/khoa/${editingKhoa.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      await fetch('/api/khoa', {
+      await fetch(apiUrl('/api/khoa'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -230,7 +231,7 @@ export default function KhoaPhong({ theme }) {
 
   const handleDeleteKhoa = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa Khoa này? Tất cả các Phòng thuộc Khoa cũng sẽ bị xóa.')) return;
-    await fetch(`/api/khoa/${id}`, { method: 'DELETE' });
+    await fetch(apiUrl(`/api/khoa/${id}`), { method: 'DELETE' });
     await fetchData();
   };
 
@@ -266,13 +267,13 @@ export default function KhoaPhong({ theme }) {
     };
 
     if (editingPhong) {
-      await fetch(`/api/phong/${editingPhong.id}`, {
+      await fetch(apiUrl(`/api/phong/${editingPhong.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      await fetch('/api/phong', {
+      await fetch(apiUrl('/api/phong'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -284,7 +285,7 @@ export default function KhoaPhong({ theme }) {
 
   const handleDeletePhong = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa Phòng này?')) return;
-    await fetch(`/api/phong/${id}`, { method: 'DELETE' });
+    await fetch(apiUrl(`/api/phong/${id}`), { method: 'DELETE' });
     await fetchData();
   };
 

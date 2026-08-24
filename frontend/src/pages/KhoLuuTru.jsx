@@ -15,6 +15,7 @@ import {
   CheckCircle,
   AlertCircle
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function KhoLuuTru({ theme, metadata }) {
   const [warehouses, setWarehouses] = useState([]);
@@ -44,7 +45,7 @@ export default function KhoLuuTru({ theme, metadata }) {
   const fetchWarehouses = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/kho-luu-tru');
+      const res = await fetch(apiUrl('/api/kho-luu-tru'));
       const data = await res.json();
       if (Array.isArray(data)) {
         setWarehouses(data);
@@ -124,7 +125,7 @@ export default function KhoLuuTru({ theme, metadata }) {
     if (!window.confirm(`Bạn có chắc chắn muốn xóa kho lưu trữ "${warehouseName}"?`)) return;
 
     try {
-      const res = await fetch(`/api/kho-luu-tru/${id}`, { method: 'DELETE' });
+      const res = await fetch(apiUrl(`/api/kho-luu-tru/${id}`), { method: 'DELETE' });
       if (res.ok) {
         fetchWarehouses();
       } else {

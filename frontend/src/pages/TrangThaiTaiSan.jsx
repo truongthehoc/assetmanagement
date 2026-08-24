@@ -10,6 +10,7 @@ import {
   Layers,
   Info
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function TrangThaiTaiSan({ theme }) {
   const [statuses, setStatuses] = useState([]);
@@ -20,7 +21,7 @@ export default function TrangThaiTaiSan({ theme }) {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('/api/trang-thai-tai-san');
+      const res = await fetch(apiUrl('/api/trang-thai-tai-san'));
       const data = await res.json();
       setStatuses(Array.isArray(data) ? data : []);
     } catch (err) {

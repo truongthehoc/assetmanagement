@@ -9,6 +9,7 @@ import {
   Package,
   Layers
 } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function LoaiTaiSan({ theme }) {
   const [types, setTypes] = useState([]);
@@ -28,7 +29,7 @@ export default function LoaiTaiSan({ theme }) {
 
   const fetchData = async () => {
     try {
-      const res = await fetch('/api/loai-tai-san');
+      const res = await fetch(apiUrl('/api/loai-tai-san'));
       const data = await res.json();
       setTypes(Array.isArray(data) ? data : []);
     } catch (err) {
@@ -63,13 +64,13 @@ export default function LoaiTaiSan({ theme }) {
     const payload = { code, name, description };
 
     if (editingType) {
-      await fetch(`/api/loai-tai-san/${editingType.id}`, {
+      await fetch(apiUrl(`/api/loai-tai-san/${editingType.id}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      await fetch('/api/loai-tai-san', {
+      await fetch(apiUrl('/api/loai-tai-san'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -82,7 +83,7 @@ export default function LoaiTaiSan({ theme }) {
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa loại tài sản này?')) return;
-    await fetch(`/api/loai-tai-san/${id}`, { method: 'DELETE' });
+    await fetch(apiUrl(`/api/loai-tai-san/${id}`), { method: 'DELETE' });
     await fetchData();
   };
 

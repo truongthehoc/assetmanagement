@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import HandoverVoucherModal from '../components/HandoverVoucherModal';
+import { apiUrl } from '../utils/api';
 
 // Custom Searchable Employee Select for AssetDetail
 function SearchableEmployeeSelect({ employees = [], value, onChange, placeholder, isLight }) {
@@ -276,9 +277,9 @@ export default function AssetDetail({ assetId, onBack, theme, onTransfer, onReso
   const fetchAssetDetails = async () => {
     try {
       const [resAsset, resMeta, resKhoa] = await Promise.all([
-        fetch(`/api/assets/${assetId}`).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/assets/metadata').then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch('/api/khoa').then(r => r.ok ? r.json() : null).catch(() => null)
+        fetch(apiUrl(`/api/assets/${assetId}`)).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(apiUrl('/api/assets/metadata')).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(apiUrl('/api/khoa')).then(r => r.ok ? r.json() : null).catch(() => null)
       ]);
 
       if (resAsset && !resAsset.error && resAsset.id) {
@@ -337,7 +338,7 @@ export default function AssetDetail({ assetId, onBack, theme, onTransfer, onReso
         reader.onload = async () => {
           const base64Data = reader.result;
           try {
-            const res = await fetch('/api/upload', {
+            const res = await fetch(apiUrl('/api/upload'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({ filename: file.name, fileData: base64Data })
@@ -456,7 +457,7 @@ export default function AssetDetail({ assetId, onBack, theme, onTransfer, onReso
     const finalLocId = !isNaN(parsedLocId) ? parsedLocId : (metadata.locations[0]?.id || null);
 
     try {
-      const res = await fetch('/api/lifecycle/transfer', {
+      const res = await fetch(apiUrl('/api/lifecycle/transfer'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -504,7 +505,7 @@ export default function AssetDetail({ assetId, onBack, theme, onTransfer, onReso
     const fileListString = poFiles.map(f => f.name).join(',');
 
     try {
-      await fetch(`/api/assets/${assetId}/procurement`, {
+      await fetch(apiUrl(`/api/assets/${assetId}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -532,7 +533,7 @@ export default function AssetDetail({ assetId, onBack, theme, onTransfer, onReso
   const handleDisposalSubmit = async (e) => {
     e.preventDefault();
     try {
-      await fetch(`/api/assets/${assetId}/procurement`, {
+      await fetch(apiUrl(`/api/assets/${assetId}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -551,7 +552,7 @@ export default function AssetDetail({ assetId, onBack, theme, onTransfer, onReso
   const handleMaintenanceSubmit = async (e) => {
     e.preventDefault();
     try {
-      await fetch(`/api/assets/${assetId}/procurement`, {
+      await fetch(apiUrl(`/api/assets/${assetId}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -571,7 +572,7 @@ export default function AssetDetail({ assetId, onBack, theme, onTransfer, onReso
     const restoredStatus = asset.previous_status || ((asset.user_id || asset.department_id) ? 'IN_USE' : 'READY');
 
     try {
-      await fetch(`/api/assets/${assetId}/procurement`, {
+      await fetch(apiUrl(`/api/assets/${assetId}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
