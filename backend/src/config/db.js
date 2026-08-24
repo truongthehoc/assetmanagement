@@ -58,7 +58,7 @@ async function initDB() {
         const dbConfig = {
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'root',
-            password: process.env.DB_PASSWORD || '',
+            password: process.env.DB_PASSWORD !== undefined ? process.env.DB_PASSWORD : 'bvdktnBD@152',
             database: targetDbName,
             port: parseInt(process.env.DB_PORT || '3306'),
             multipleStatements: true
