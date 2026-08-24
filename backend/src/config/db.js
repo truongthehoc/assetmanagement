@@ -54,11 +54,12 @@ const memoryStore = {
 
 async function initDB() {
     try {
+        const targetDbName = process.env.DB_NAME || 'quanlytaisan';
         const dbConfig = {
             host: process.env.DB_HOST || 'localhost',
             user: process.env.DB_USER || 'root',
             password: process.env.DB_PASSWORD || '',
-            database: process.env.DB_NAME || 'asset_management',
+            database: targetDbName,
             port: parseInt(process.env.DB_PORT || '3306'),
             multipleStatements: true
         };
@@ -140,9 +141,14 @@ async function initDB() {
         `).catch(() => {});
 
         isMysqlMode = true;
-        console.log('Successfully connected to MySQL database (Clean mode ready).');
+        console.log(`=======================================================`);
+        console.log(` ✅ KET NOI THANH CONG MYSQL DATABASE: [${dbConfig.database}]`);
+        console.log(`=======================================================`);
     } catch (err) {
-        console.log('MySQL connection not available. Using internal clean store...');
+        console.error(`=======================================================`);
+        console.error(` ❌ LOI KET NOI MYSQL DATABASE:`, err.message);
+        console.error(`    Dang chuyen sang che do Memory Store tam thoi...`);
+        console.error(`=======================================================`);
         isMysqlMode = false;
     }
 }
