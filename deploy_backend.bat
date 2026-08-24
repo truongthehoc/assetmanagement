@@ -7,10 +7,15 @@ echo    CAP NHAT BACKEND API TU GITHUB (PATH: D:\Apps\Assetmanagement)
 echo ======================================================================
 echo.
 
-cd /d "D:\Apps\Assetmanagement"
-
-echo  [1/3] KEO CODE BACKEND MOI NHAT TU GITHUB...
-git pull origin main
+if exist "D:\Apps\Assetmanagement" (
+    cd /d "D:\Apps\Assetmanagement"
+    git pull origin main
+    cd /d "D:\Apps\Assetmanagement\backend"
+) else (
+    cd /d "%~dp0"
+    git pull origin main
+    cd /d "%~dp0backend"
+)
 
 echo.
 echo  [2/3] CAI DAT DEPENDENCIES BACKEND...
@@ -18,7 +23,6 @@ call npm install --production=false
 
 echo.
 echo  [3/3] RESTART DICH VU BACKEND TREN PM2 (PORT 3001)...
-cd /d "D:\Apps\Assetmanagement\backend"
 call pm2 reload asset-backend || call pm2 start src/server.js --name "asset-backend" --env PORT=3001
 
 echo.
