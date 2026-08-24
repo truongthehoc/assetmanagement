@@ -22,6 +22,7 @@ import UserProfile from './pages/UserProfile';
 import Login from './pages/Login';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
+import { apiUrl } from './utils/api';
 
 // Helper to read initial tab and asset ID from URL hash or localStorage
 const getInitialState = () => {
@@ -65,7 +66,7 @@ export default function App() {
   const [permissionMatrix, setPermissionMatrix] = useState(null);
 
   useEffect(() => {
-    fetch('/api/permissions/matrix')
+    fetch(apiUrl('/api/permissions/matrix'))
       .then(res => res.json())
       .then(data => {
         if (data && typeof data === 'object') setPermissionMatrix(data);
@@ -132,14 +133,14 @@ export default function App() {
   const fetchAllData = async () => {
     try {
       const [resStats, resPending, resAssets, resDrifts, resLogs, resMaint, resMeta, resSettings] = await Promise.all([
-        fetch('/api/dashboard/stats').then(r => r.json()),
-        fetch('/api/discovery').then(r => r.json()),
-        fetch('/api/assets').then(r => r.json()),
-        fetch('/api/drifts').then(r => r.json()),
-        fetch('/api/lifecycle/logs').then(r => r.json()),
-        fetch('/api/maintenance').then(r => r.json()),
-        fetch('/api/assets/metadata').then(r => r.json()),
-        fetch('/api/settings').then(r => r.json()).catch(() => null)
+        fetch(apiUrl('/api/dashboard/stats')).then(r => r.json()),
+        fetch(apiUrl('/api/discovery')).then(r => r.json()),
+        fetch(apiUrl('/api/assets')).then(r => r.json()),
+        fetch(apiUrl('/api/drifts')).then(r => r.json()),
+        fetch(apiUrl('/api/lifecycle/logs')).then(r => r.json()),
+        fetch(apiUrl('/api/maintenance')).then(r => r.json()),
+        fetch(apiUrl('/api/assets/metadata')).then(r => r.json()),
+        fetch(apiUrl('/api/settings')).then(r => r.json()).catch(() => null)
       ]);
 
       setStats(resStats);

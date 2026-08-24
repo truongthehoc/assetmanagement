@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ShieldCheck, User, Lock, Eye, EyeOff, ArrowRight, Activity, Check, Sparkles } from 'lucide-react';
+import { apiUrl } from '../utils/api';
 
 export default function Login({ onLogin, systemInfo, orgInfo, theme }) {
   const isLight = theme === 'light';
@@ -31,7 +32,7 @@ export default function Login({ onLogin, systemInfo, orgInfo, theme }) {
     setIsLoading(true);
 
     try {
-      const res = await fetch('/api/users/login', {
+      const res = await fetch(apiUrl('/api/users/login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: username.trim(), password })
