@@ -81,20 +81,19 @@ async function initDB() {
             queueLimit: 0
         });
 
-        // Test if assets table exists
-        const [tables] = await pool.query("SHOW TABLES LIKE 'assets'");
-        if (tables.length === 0) {
-            console.log('Initializing clean MySQL schema...');
-            const schemaPath = path.join(__dirname, '../../../database/schema.sql');
-            if (fs.existsSync(schemaPath)) {
-                const schemaSql = fs.readFileSync(schemaPath, 'utf8');
-                await pool.query(schemaSql);
-            }
+        // Always run schema.sql to ensure ALL tables exist (uses CREATE TABLE IF NOT EXISTS, safe to re-run)
+        console.log('Ensuring all MySQL tables exist...');
+        const schemaPath = path.join(__dirname, '../../../database/schema.sql');
+        if (fs.existsSync(schemaPath)) {
+            const schemaSql = fs.readFileSync(schemaPath, 'utf8');
+            await pool.query(schemaSql).catch(e => {
+                console.warn('Schema init warning (some statements may have been skipped):', e.message);
+            });
         }
 
         await pool.query('SELECT 1');
         
-        // Ensure new columns exist on MySQL assets table
+        // Ensure new columns exist on MySQL assets table (migrations)
         const migrations = [
             "ALTER TABLE assets MODIFY COLUMN asset_type VARCHAR(255) NULL DEFAULT 'Thiết bị IT'",
             "ALTER TABLE assets ADD COLUMN purchase_cost DECIMAL(15,2) NULL",
@@ -108,37 +107,6 @@ async function initDB() {
         for (const m of migrations) {
             await pool.query(m).catch(() => {});
         }
-        // Ensure nha_cung_cap table exists in MySQL
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS nha_cung_cap (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                code VARCHAR(50) UNIQUE NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                contact_person VARCHAR(100),
-                phone VARCHAR(50),
-                email VARCHAR(100),
-                address VARCHAR(255),
-                notes TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB;
-        `).catch(() => {});
-
-        // Ensure kho_luu_tru table exists in MySQL
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS kho_luu_tru (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                code VARCHAR(50) UNIQUE NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                phong_id INT,
-                location_address VARCHAR(255),
-                manager_name VARCHAR(100),
-                phone VARCHAR(50),
-                notes TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB;
-        `).catch(() => {});
 
         isMysqlMode = true;
         console.log(`=======================================================`);

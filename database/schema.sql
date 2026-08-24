@@ -206,3 +206,123 @@ CREATE TABLE IF NOT EXISTS nha_cung_cap (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
+
+-- 12. Khoa (Faculty / Division)
+CREATE TABLE IF NOT EXISTS khoa (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    manager_name VARCHAR(100),
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 13. Phong (Department / Room under Khoa)
+CREATE TABLE IF NOT EXISTS phong (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    khoa_id INT NOT NULL,
+    location_address VARCHAR(255),
+    manager_name VARCHAR(100),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (khoa_id) REFERENCES khoa(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+-- 14. Nhan Vien (Employees)
+CREATE TABLE IF NOT EXISTS nhan_vien (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    employee_id VARCHAR(50) UNIQUE NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    phong_id INT,
+    position VARCHAR(100),
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (phong_id) REFERENCES phong(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 15. Chuc Danh (Job Titles / Positions)
+CREATE TABLE IF NOT EXISTS chuc_danh (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 16. Trang Thai Tai San (Asset Status Master)
+CREATE TABLE IF NOT EXISTS trang_thai_tai_san (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    color_badge VARCHAR(50) DEFAULT 'blue',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 17. Kho Luu Tru (Warehouses / Storage)
+CREATE TABLE IF NOT EXISTS kho_luu_tru (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    code VARCHAR(50) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    phong_id INT,
+    location_address VARCHAR(255),
+    manager_name VARCHAR(100),
+    phone VARCHAR(50),
+    notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (phong_id) REFERENCES phong(id) ON DELETE SET NULL
+) ENGINE=InnoDB;
+
+-- 18. System Users (IAM)
+CREATE TABLE IF NOT EXISTS system_users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) UNIQUE NOT NULL,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    phone VARCHAR(50),
+    employee_id VARCHAR(50),
+    role VARCHAR(50) DEFAULT 'STAFF',
+    department_name VARCHAR(255),
+    job_title VARCHAR(255) DEFAULT '',
+    avatar_url VARCHAR(500) DEFAULT '',
+    status VARCHAR(20) DEFAULT 'ACTIVE',
+    auth_method VARCHAR(50) DEFAULT 'LOCAL',
+    last_login VARCHAR(100) DEFAULT 'Chưa đăng nhập',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 19. System Settings (Key-Value)
+CREATE TABLE IF NOT EXISTS system_settings (
+    setting_key VARCHAR(50) PRIMARY KEY,
+    setting_value LONGTEXT NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- 20. Permission Matrix (RBAC)
+CREATE TABLE IF NOT EXISTS permission_matrix (
+    role_name VARCHAR(50) PRIMARY KEY,
+    permissions_json JSON NOT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+-- Seed default Trang Thai Tai San
+INSERT IGNORE INTO trang_thai_tai_san (code, name, description, color_badge) VALUES
+('IN_STOCK', 'Trong Kho (Chờ Cấp Phát)', 'Thiết bị mới nhập kho, chưa được gán cho người sử dụng', 'blue'),
+('IN_USE', 'Đang Sử Dụng', 'Thiết bị đã được cấp phát và đang được sử dụng bởi nhân viên', 'green'),
+('BACKUP', 'Dự Phòng', 'Thiết bị dự phòng, sẵn sàng thay thế khi cần', 'cyan'),
+('REPAIR', 'Đang Bảo Trì / Sửa Chữa', 'Thiết bị đang trong quá trình bảo trì hoặc sửa chữa', 'orange'),
+('DISPOSED', 'Đã Thanh Lý / Hủy', 'Thiết bị đã được thanh lý hoặc loại bỏ khỏi hệ thống', 'red');
+
+-- Seed default admin user
+INSERT IGNORE INTO system_users (id, username, full_name, email, phone, employee_id, role, department_name, job_title, status, auth_method, last_login)
+VALUES (1, 'admin_system', 'Admin System', 'admin@company.com', '0901234567', 'SYS001', 'ADMIN', 'Công Nghệ Thông Tin (IT Central)', 'Quản Trị Viên Hệ Thống', 'ACTIVE', 'LOCAL', 'Vừa xong');
+
