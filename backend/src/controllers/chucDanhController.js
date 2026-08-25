@@ -33,6 +33,9 @@ async function createChucDanh(req, res) {
             id: insertRes.insertId
         });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('Duplicate entry'))) {
+            return res.status(400).json({ error: `Mã hoặc tên chức danh '${req.body.code || ''}' đã tồn tại trong hệ thống.` });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -49,6 +52,9 @@ async function updateChucDanh(req, res) {
 
         return res.json({ status: 'success', message: 'Đã cập nhật thông tin Chức Danh / Chức Vụ.' });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('Duplicate entry'))) {
+            return res.status(400).json({ error: `Mã hoặc tên chức danh '${req.body.code || ''}' đã tồn tại trong hệ thống.` });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -59,6 +65,9 @@ async function deleteChucDanh(req, res) {
         await db.query('DELETE FROM chuc_danh WHERE id = ?', [id]);
         return res.json({ status: 'success', message: 'Đã xóa Chức Danh / Chức Vụ.' });
     } catch (err) {
+        if (err.code === 'ER_ROW_IS_REFERENCED' || err.code === 'ER_ROW_IS_REFERENCED_2' || (err.message && err.message.includes('foreign key constraint'))) {
+            return res.status(400).json({ error: 'Không thể xóa chức danh này vì đang được liên kết dữ liệu.' });
+        }
         return res.status(500).json({ error: err.message });
     }
 }

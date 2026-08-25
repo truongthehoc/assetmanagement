@@ -36,6 +36,9 @@ async function createEmployee(req, res) {
             id: insertRes.insertId
         });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('Duplicate entry'))) {
+            return res.status(400).json({ error: `Mã nhân viên '${req.body.employeeId || ''}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác!` });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -54,6 +57,9 @@ async function updateEmployee(req, res) {
 
         return res.json({ status: 'success', message: 'Đã cập nhật thông tin nhân viên.' });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('Duplicate entry'))) {
+            return res.status(400).json({ error: `Mã nhân viên '${req.body.employeeId || ''}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác!` });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -76,6 +82,9 @@ async function deleteEmployee(req, res) {
         await db.query('DELETE FROM nhan_vien WHERE id = ?', [id]);
         return res.json({ status: 'success', message: 'Đã xóa nhân viên.' });
     } catch (err) {
+        if (err.code === 'ER_ROW_IS_REFERENCED' || err.code === 'ER_ROW_IS_REFERENCED_2' || (err.message && err.message.includes('foreign key constraint'))) {
+            return res.status(400).json({ error: 'Không thể xóa nhân viên này vì đang được gán phân bổ tài sản trong hệ thống.' });
+        }
         return res.status(500).json({ error: err.message });
     }
 }

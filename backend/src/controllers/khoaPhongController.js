@@ -34,6 +34,9 @@ async function createKhoa(req, res) {
             id: insertRes.insertId
         });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('Duplicate entry'))) {
+            return res.status(400).json({ error: `Mã hoặc tên Khoa '${req.body.code || ''}' đã tồn tại trong hệ thống.` });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -50,6 +53,9 @@ async function updateKhoa(req, res) {
 
         return res.json({ status: 'success', message: 'Đã cập nhật thông tin Khoa.' });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('Duplicate entry'))) {
+            return res.status(400).json({ error: `Mã hoặc tên Khoa '${req.body.code || ''}' đã tồn tại trong hệ thống.` });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -60,6 +66,9 @@ async function deleteKhoa(req, res) {
         await db.query('DELETE FROM khoa WHERE id = ?', [id]);
         return res.json({ status: 'success', message: 'Đã xóa Khoa.' });
     } catch (err) {
+        if (err.code === 'ER_ROW_IS_REFERENCED' || err.code === 'ER_ROW_IS_REFERENCED_2' || (err.message && err.message.includes('foreign key constraint'))) {
+            return res.status(400).json({ error: 'Không thể xóa Khoa này vì đang có các Phòng trực thuộc hoặc tài sản liên kết.' });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -98,6 +107,9 @@ async function createPhong(req, res) {
             id: insertRes.insertId
         });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('Duplicate entry'))) {
+            return res.status(400).json({ error: `Mã hoặc tên Phòng '${req.body.code || ''}' đã tồn tại trong hệ thống.` });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -114,6 +126,9 @@ async function updatePhong(req, res) {
 
         return res.json({ status: 'success', message: 'Đã cập nhật thông tin Phòng.' });
     } catch (err) {
+        if (err.code === 'ER_DUP_ENTRY' || (err.message && err.message.includes('Duplicate entry'))) {
+            return res.status(400).json({ error: `Mã hoặc tên Phòng '${req.body.code || ''}' đã tồn tại trong hệ thống.` });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
@@ -124,6 +139,9 @@ async function deletePhong(req, res) {
         await db.query('DELETE FROM phong WHERE id = ?', [id]);
         return res.json({ status: 'success', message: 'Đã xóa Phòng.' });
     } catch (err) {
+        if (err.code === 'ER_ROW_IS_REFERENCED' || err.code === 'ER_ROW_IS_REFERENCED_2' || (err.message && err.message.includes('foreign key constraint'))) {
+            return res.status(400).json({ error: 'Không thể xóa Phòng này vì đang được phân bổ nhân viên hoặc tài sản.' });
+        }
         return res.status(500).json({ error: err.message });
     }
 }
