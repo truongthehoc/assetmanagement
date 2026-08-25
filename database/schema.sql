@@ -62,6 +62,7 @@ CREATE TABLE IF NOT EXISTS assets (
     location_id INT,
     user_id INT,
     serial_number VARCHAR(100),
+    ip_address VARCHAR(100),
     mainboard_model VARCHAR(255),
     cpu_model VARCHAR(255),
     ram_total_gb INT,

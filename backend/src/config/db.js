@@ -172,6 +172,7 @@ async function initDB() {
                 location_id INT,
                 user_id INT,
                 serial_number VARCHAR(100),
+                ip_address VARCHAR(100),
                 mainboard_model VARCHAR(255),
                 cpu_model VARCHAR(255),
                 ram_total_gb INT,
@@ -418,7 +419,8 @@ async function initDB() {
             "ALTER TABLE assets ADD COLUMN warranty_expiration_date DATE NULL",
             "ALTER TABLE assets ADD COLUMN po_document_url TEXT NULL",
             "ALTER TABLE assets ADD COLUMN previous_status VARCHAR(50) NULL",
-            "ALTER TABLE assets ADD COLUMN notes TEXT NULL"
+            "ALTER TABLE assets ADD COLUMN notes TEXT NULL",
+            "ALTER TABLE assets ADD COLUMN ip_address VARCHAR(100) NULL"
         ];
         for (const m of migrations) {
             await pool.query(m).catch(() => {});

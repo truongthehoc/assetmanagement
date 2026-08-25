@@ -165,17 +165,27 @@ async function triggerRealHostScan(req, res) {
 
         // 3. Network Interface MAC & Real Host IP Address
         let macAddress = '58:ce:2a:69:f3:1b';
-        let ipAddress = '10.30.22.48';
+        let ipAddress = '';
         const nics = os.networkInterfaces();
+
         for (const name of Object.keys(nics)) {
             for (const net of nics[name]) {
-                if (!net.internal && net.family === 'IPv4') {
-                    ipAddress = net.address;
-                    macAddress = net.mac || macAddress;
-                    break;
+                if (!net.internal && net.family === 'IPv4' && !net.address.startsWith('169.254.')) {
+                    // Prioritize active LAN IP addresses (10.x, 192.168.x, 172.x)
+                    if (net.address.startsWith('10.') || net.address.startsWith('192.168.') || net.address.startsWith('172.')) {
+                        ipAddress = net.address;
+                        macAddress = net.mac || macAddress;
+                        break;
+                    } else if (!ipAddress) {
+                        ipAddress = net.address;
+                        macAddress = net.mac || macAddress;
+                    }
                 }
             }
+            if (ipAddress && (ipAddress.startsWith('10.') || ipAddress.startsWith('192.168.'))) break;
         }
+
+        if (!ipAddress) ipAddress = '10.30.11.152';
 
         // 4. Query WMI BaseBoard & BIOS Serial
         const boardData = await runPowerShellJson('Get-CimInstance Win32_BaseBoard | Select-Object Manufacturer, Product, SerialNumber | ConvertTo-Json');
