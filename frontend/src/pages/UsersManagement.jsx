@@ -48,95 +48,34 @@ export default function UsersManagement({ metadata = { departments: [], users: [
   const [activeSubTab, setActiveSubTab] = useState('USERS');
 
   // Employee list loaded from API or metadata
-  const [employeeList, setEmployeeList] = useState([
-    { id: 1, employee_id: 'EMP001', full_name: 'Nguyễn Văn Anh', email: 'anh.nguyen@company.com', phone: '0901234567', department_name: 'Công Nghệ Thông Tin (IT Central)' },
-    { id: 2, employee_id: 'EMP002', full_name: 'Trần Thị Bình', email: 'binh.tran@company.com', phone: '0902345678', department_name: 'Nhân Sự & Hành Chính' },
-    { id: 3, employee_id: 'EMP003', full_name: 'Lê Hoàng Cường', email: 'cuong.le@company.com', phone: '0903456789', department_name: 'Kế Toán & Tài Chính' },
-    { id: 4, employee_id: 'EMP004', full_name: 'Phạm Minh Dũng', email: 'dung.pham@company.com', phone: '0904567890', department_name: 'Khoa Khám Bệnh' }
-  ]);
+  const [employeeList, setEmployeeList] = useState([]);
+  const [usersList, setUsersList] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(true);
 
   // Fetch employees from API on mount
   useEffect(() => {
     fetch(apiUrl('/api/employees'))
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setEmployeeList(data);
         }
       })
       .catch(err => console.warn('Employee API fetch notice:', err));
   }, []);
 
-  // Seed initial system users
-  const [usersList, setUsersList] = useState([
-    {
-      id: 1,
-      username: 'admin_system',
-      fullName: 'Admin System',
-      email: 'admin@company.com',
-      phone: '0901234567',
-      employeeId: 'SYS001',
-      role: 'ADMIN',
-      departmentName: 'Công Nghệ Thông Tin (IT Central)',
-      jobTitle: 'Quản Trị Viên Hệ Thống',
-      status: 'ACTIVE',
-      lastLogin: 'Vừa xong',
-      authMethod: 'LOCAL'
-    },
-    {
-      id: 2,
-      username: 'manager_it',
-      fullName: 'Nguyễn Văn Anh',
-      email: 'anh.nguyen@company.com',
-      phone: '0902345678',
-      employeeId: 'EMP001',
-      role: 'MANAGER',
-      departmentName: 'Công Nghệ Thông Tin (IT Central)',
-      jobTitle: 'Trưởng Phòng IT',
-      status: 'ACTIVE',
-      lastLogin: 'Hôm nay, 08:30',
-      authMethod: 'SSO / LDAP'
-    },
-    {
-      id: 3,
-      username: 'user_binh',
-      fullName: 'Trần Thị Bình',
-      email: 'binh.tran@company.com',
-      phone: '0903456789',
-      employeeId: 'EMP002',
-      role: 'STAFF',
-      departmentName: 'Nhân Sự & Hành Chính',
-      jobTitle: 'Chuyên Viên HR',
-      status: 'ACTIVE',
-      lastLogin: 'Hôm qua, 16:45',
-      authMethod: 'SSO / LDAP'
-    },
-    {
-      id: 4,
-      username: 'user_cuong',
-      fullName: 'Lê Hoàng Cường',
-      email: 'cuong.le@company.com',
-      phone: '0904567890',
-      employeeId: 'EMP003',
-      role: 'VIEWER',
-      departmentName: 'Kế Toán & Tài Chính',
-      jobTitle: 'Kế Toán Trưởng',
-      status: 'INACTIVE',
-      lastLogin: '3 ngày trước',
-      authMethod: 'LOCAL'
-    }
-  ]);
-
   // Fetch users from API on mount
   useEffect(() => {
+    setLoadingUsers(true);
     fetch(apiUrl('/api/users'))
       .then(res => res.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
+        if (Array.isArray(data)) {
           setUsersList(data);
         }
       })
-      .catch(err => console.warn('User API fetch notice:', err));
+      .catch(err => console.warn('User API fetch notice:', err))
+      .finally(() => setLoadingUsers(false));
   }, []);
 
   // PERMISSION MATRIX STATE & LOGIC
