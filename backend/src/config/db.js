@@ -404,10 +404,9 @@ async function initDB() {
         }
 
         // Set default password for users who have no password yet (bcrypt hash of 'Admin@123')
-        // $2b$10$YZkR3...  = bcrypt('Admin@123', 10)
-        const DEFAULT_ADMIN_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyEtZRfbm';
+        const DEFAULT_ADMIN_HASH = '$2a$10$U8v1aR6k2c/gpkMaF46ZGuCuOiIwDHVU/D3AH7Ntm3rY04migxglq';
         await pool.query(
-            `UPDATE system_users SET password_hash = ? WHERE password_hash = '' OR password_hash IS NULL`,
+            `UPDATE system_users SET password_hash = ? WHERE password_hash = '' OR password_hash IS NULL OR password_hash LIKE '$2b$10$N9qo8u%'`,
             [DEFAULT_ADMIN_HASH]
         ).catch(() => {});
 

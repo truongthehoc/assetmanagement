@@ -2,7 +2,7 @@ const db = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 // Default bcrypt hash for 'Admin@123'
-const DEFAULT_PASSWORD_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyEtZRfbm';
+const DEFAULT_PASSWORD_HASH = '$2a$10$U8v1aR6k2c/gpkMaF46ZGuCuOiIwDHVU/D3AH7Ntm3rY04migxglq';
 
 const defaultPermissionMatrix = {
   ADMIN: {
@@ -156,7 +156,7 @@ async function ensureTable() {
     // Ensure all existing users have a valid password hash (default 'Admin@123')
     try {
       await db.query(
-        `UPDATE system_users SET password_hash = ? WHERE password_hash = '' OR password_hash IS NULL`,
+        `UPDATE system_users SET password_hash = ? WHERE password_hash = '' OR password_hash IS NULL OR password_hash LIKE '$2b$10$N9qo8u%'`,
         [DEFAULT_PASSWORD_HASH]
       );
     } catch (e) {}
@@ -542,17 +542,19 @@ async function savePermissionMatrix(req, res) {
 function checkPasswordMatch(inputPassword, storedHash) {
   if (!inputPassword) return false;
   if (!storedHash || storedHash === '') {
-    // If no hash in DB, accept standard default passwords
-    return inputPassword === 'Admin@123' || inputPassword === '123456';
+    // If no hash in DB yet, accept only 'Admin@123'
+    return inputPassword === 'Admin@123';
   }
   // Try bcrypt compare
   if (storedHash.startsWith('$2a$') || storedHash.startsWith('$2b$') || storedHash.startsWith('$2y$')) {
     try {
-      if (bcrypt.compareSync(inputPassword, storedHash)) return true;
-    } catch (e) {}
+      return bcrypt.compareSync(inputPassword, storedHash);
+    } catch (e) {
+      return false;
+    }
   }
-  // Plaintext match or default fallback
-  return inputPassword === storedHash || inputPassword === 'Admin@123';
+  // Plaintext match for legacy passwords
+  return inputPassword === storedHash;
 }
 
 // POST /api/users/login
