@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Search, Bell, Sun, Moon, User, ShieldCheck, LogOut, ChevronDown, Monitor, X, ArrowRight, Building2, Tag } from 'lucide-react';
+import { getFileUrl } from '../utils/api';
 
 export default function Navbar({ 
   activeTab, 
@@ -241,9 +242,13 @@ export default function Navbar({
                 : 'hover:bg-slate-800/60 text-white'
             }`}
           >
-            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 font-bold text-white flex items-center justify-center text-xs shadow-sm">
-              {profile.fullName ? profile.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'US'}
-            </div>
+            {profile.avatarUrl ? (
+              <img src={getFileUrl(profile.avatarUrl)} alt={profile.fullName} className="w-8 h-8 rounded-full object-cover shadow-sm border border-cyan-500/30" />
+            ) : (
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 font-bold text-white flex items-center justify-center text-xs shadow-sm">
+                {profile.fullName ? profile.fullName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'US'}
+              </div>
+            )}
             <div className="text-left hidden sm:block">
               <p className="text-xs font-bold leading-tight">{profile.fullName}</p>
               <p className="text-[10px] text-cyan-600 font-extrabold uppercase">{profile.role || 'ADMIN'}</p>

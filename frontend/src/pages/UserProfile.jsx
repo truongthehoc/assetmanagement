@@ -16,7 +16,7 @@ import {
   BadgeCheck,
   Briefcase
 } from 'lucide-react';
-import { apiUrl } from '../utils/api';
+import { apiUrl, getFileUrl } from '../utils/api';
 
 export default function UserProfile({ theme, onUserUpdated }) {
   const isLight = theme === 'light';
@@ -255,7 +255,7 @@ export default function UserProfile({ theme, onUserUpdated }) {
             <div className="relative w-28 h-28 mx-auto mt-2 group">
               {profile.avatarUrl ? (
                 <img 
-                  src={profile.avatarUrl} 
+                  src={getFileUrl(profile.avatarUrl)} 
                   alt={profile.fullName} 
                   className="w-28 h-28 rounded-full object-cover border-4 border-cyan-500/30 shadow-xl"
                 />
