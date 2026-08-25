@@ -116,34 +116,6 @@ async function initDB() {
         console.log('🔄 Dang kiem tra va khoi tao schema bang MySQL...');
 
         // Create every table individually with CREATE TABLE IF NOT EXISTS
-        const tableDDLs = [
-            `CREATE TABLE IF NOT EXISTS departments (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                code VARCHAR(50) UNIQUE NOT NULL,
-                name VARCHAR(255) NOT NULL,
-                manager_name VARCHAR(100),
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB;`,
-
-            `CREATE TABLE IF NOT EXISTS locations (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                building VARCHAR(100) NOT NULL,
-                floor VARCHAR(50) NOT NULL,
-                room VARCHAR(100) NOT NULL,
-                description VARCHAR(255),
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB;`,
-
-            `CREATE TABLE IF NOT EXISTS users (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                employee_id VARCHAR(50) UNIQUE NOT NULL,
-                full_name VARCHAR(255) NOT NULL,
-                email VARCHAR(255) UNIQUE,
-                phone VARCHAR(50),
-                department_id INT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            ) ENGINE=InnoDB;`,
-
             `CREATE TABLE IF NOT EXISTS devices_pending (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 agent_id VARCHAR(100) UNIQUE NOT NULL,
@@ -410,7 +382,7 @@ async function initDB() {
             });
         }
 
-        // Run migrations for existing columns
+        // Run migrations for existing columns & clean up obsolete legacy tables
         const migrations = [
             "ALTER TABLE assets MODIFY COLUMN asset_type VARCHAR(255) NULL DEFAULT 'Thiết bị IT'",
             "ALTER TABLE assets MODIFY COLUMN status VARCHAR(50) NULL DEFAULT 'IN_USE'",
@@ -422,7 +394,10 @@ async function initDB() {
             "ALTER TABLE assets ADD COLUMN previous_status VARCHAR(50) NULL",
             "ALTER TABLE assets ADD COLUMN notes TEXT NULL",
             "ALTER TABLE assets ADD COLUMN ip_address VARCHAR(100) NULL",
-            "ALTER TABLE system_users ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''"
+            "ALTER TABLE system_users ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''",
+            "DROP TABLE IF EXISTS users",
+            "DROP TABLE IF EXISTS departments",
+            "DROP TABLE IF EXISTS locations"
         ];
         for (const m of migrations) {
             await pool.query(m).catch(() => {});

@@ -12,12 +12,12 @@ async function scanAudit(req, res) {
         const assets = await db.query(
             `SELECT a.*, 
                     d.name as department_name,
-                    l.building as location_building, l.floor as location_floor, l.room as location_room,
+                    p.location_address as location_address, p.name as room_name,
                     u.full_name as user_name
              FROM assets a
-             LEFT JOIN departments d ON a.department_id = d.id
-             LEFT JOIN locations l ON a.location_id = l.id
-             LEFT JOIN users u ON a.user_id = u.id
+             LEFT JOIN khoa d ON a.department_id = d.id
+             LEFT JOIN phong p ON a.location_id = p.id
+             LEFT JOIN nhan_vien u ON a.user_id = u.id
              WHERE a.qr_code = ? OR a.asset_tag = ?`,
             [qrCode, qrCode]
         );

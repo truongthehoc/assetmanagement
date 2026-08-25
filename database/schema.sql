@@ -2,37 +2,7 @@
 CREATE DATABASE IF NOT EXISTS asset_management DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE asset_management;
 
--- 1. Departments & Locations
-CREATE TABLE IF NOT EXISTS departments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    code VARCHAR(50) UNIQUE NOT NULL,
-    name VARCHAR(255) NOT NULL,
-    manager_name VARCHAR(100),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
-CREATE TABLE IF NOT EXISTS locations (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    building VARCHAR(100) NOT NULL,
-    floor VARCHAR(50) NOT NULL,
-    room VARCHAR(100) NOT NULL,
-    description VARCHAR(255),
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB;
-
--- 2. Users / Employees
-CREATE TABLE IF NOT EXISTS users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    employee_id VARCHAR(50) UNIQUE NOT NULL,
-    full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) UNIQUE,
-    phone VARCHAR(50),
-    department_id INT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE SET NULL
-) ENGINE=InnoDB;
-
--- 3. Discovery / Pending Devices from Agent
+-- 1. Discovery / Pending Devices from Agent
 CREATE TABLE IF NOT EXISTS devices_pending (
     id INT AUTO_INCREMENT PRIMARY KEY,
     agent_id VARCHAR(100) UNIQUE NOT NULL,
@@ -297,6 +267,7 @@ CREATE TABLE IF NOT EXISTS kho_luu_tru (
 CREATE TABLE IF NOT EXISTS system_users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL DEFAULT '',
     full_name VARCHAR(255) NOT NULL,
     email VARCHAR(255),
     phone VARCHAR(50),
@@ -333,7 +304,7 @@ INSERT IGNORE INTO trang_thai_tai_san (code, name, description, color_badge) VAL
 ('REPAIR', 'Đang Bảo Trì / Sửa Chữa', 'Thiết bị đang trong quá trình bảo trì hoặc sửa chữa', 'orange'),
 ('DISPOSED', 'Đã Thanh Lý / Hủy', 'Thiết bị đã được thanh lý hoặc loại bỏ khỏi hệ thống', 'red');
 
--- Seed default admin user
-INSERT IGNORE INTO system_users (id, username, full_name, email, phone, employee_id, role, department_name, job_title, status, auth_method, last_login)
-VALUES (1, 'admin_system', 'Admin System', 'admin@company.com', '0901234567', 'SYS001', 'ADMIN', 'Công Nghệ Thông Tin (IT Central)', 'Quản Trị Viên Hệ Thống', 'ACTIVE', 'LOCAL', 'Vừa xong');
+-- Seed default admin user (password: Admin@123)
+INSERT IGNORE INTO system_users (id, username, password_hash, full_name, email, phone, employee_id, role, department_name, job_title, status, auth_method, last_login)
+VALUES (1, 'admin_system', '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyEtZRfbm', 'Admin System', 'admin@company.com', '0901234567', 'SYS001', 'ADMIN', 'Công Nghệ Thông Tin (IT Central)', 'Quản Trị Viên Hệ Thống', 'ACTIVE', 'LOCAL', 'Chưa đăng nhập');
 

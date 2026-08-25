@@ -8,8 +8,8 @@ async function getSchedules(req, res) {
                    d.name as department_name, u.full_name as user_name
             FROM maintenance_schedules m
             JOIN assets a ON m.asset_id = a.id
-            LEFT JOIN departments d ON a.department_id = d.id
-            LEFT JOIN users u ON a.user_id = u.id
+            LEFT JOIN khoa d ON a.department_id = d.id
+            LEFT JOIN nhan_vien u ON a.user_id = u.id
             ORDER BY m.next_due ASC
         `;
         const rows = await db.query(sql);

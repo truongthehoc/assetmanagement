@@ -8,7 +8,7 @@ async function getAlerts(req, res) {
             SELECT d.*, a.asset_tag, a.hostname, a.asset_type, u.full_name as user_name
             FROM drift_alerts d
             JOIN assets a ON d.asset_id = a.id
-            LEFT JOIN users u ON a.user_id = u.id
+            LEFT JOIN nhan_vien u ON a.user_id = u.id
             WHERE 1=1
         `;
         const params = [];
