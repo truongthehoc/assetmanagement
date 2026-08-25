@@ -5,16 +5,20 @@ const { exec } = require('child_process');
 
 function runPowerShellJson(cmd) {
     return new Promise((resolve) => {
-        exec(`powershell -Command "${cmd}"`, { encoding: 'utf8', timeout: 10000, maxBuffer: 10 * 1024 * 1024 }, (err, stdout) => {
-            if (err || !stdout) resolve(null);
-            else {
-                try {
-                    resolve(JSON.parse(stdout.trim()));
-                } catch {
-                    resolve(null);
+        exec(
+            `powershell -WindowStyle Hidden -NoProfile -NonInteractive -Command "${cmd}"`,
+            { encoding: 'utf8', timeout: 15000, maxBuffer: 10 * 1024 * 1024, windowsHide: true },
+            (err, stdout) => {
+                if (err || !stdout) resolve(null);
+                else {
+                    try {
+                        resolve(JSON.parse(stdout.trim()));
+                    } catch {
+                        resolve(null);
+                    }
                 }
             }
-        });
+        );
     });
 }
 
