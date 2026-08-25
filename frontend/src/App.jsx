@@ -76,20 +76,25 @@ export default function App() {
       .catch(err => console.warn('Matrix fetch error:', err));
   }, []);
 
-  // Authentication State
+  // Authentication State - Default to FALSE unless explicitly authenticated
   const [isAuthenticated, setIsAuthenticated] = useState(() => {
-    return localStorage.getItem('app_authenticated') !== 'false';
+    const isAuth = localStorage.getItem('app_authenticated') === 'true';
+    const user = localStorage.getItem('app_user_profile');
+    return isAuth && !!user;
   });
 
   const handleLoginSuccess = (userProfile) => {
     localStorage.setItem('app_authenticated', 'true');
+    localStorage.setItem('app_user_profile', JSON.stringify(userProfile || { role: 'ADMIN' }));
     setCurrentUser(userProfile || { role: 'ADMIN' });
     setActiveTab('dashboard');
     setIsAuthenticated(true);
   };
 
   const handleLogout = () => {
-    localStorage.setItem('app_authenticated', 'false');
+    localStorage.removeItem('app_authenticated');
+    localStorage.removeItem('app_user_profile');
+    setCurrentUser(null);
     setIsAuthenticated(false);
   };
 
