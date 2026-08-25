@@ -207,14 +207,15 @@ export default function UsersManagement({ metadata = { departments: [], users: [
         body: JSON.stringify(matrixData)
       });
       if (res.ok) {
+        showToast('Lưu ma trận phân quyền hệ thống thành công!', 'success');
         setMatrixSaveSuccess(true);
         setTimeout(() => setMatrixSaveSuccess(false), 3000);
       } else {
-        alert('Có lỗi xảy ra khi lưu ma trận phân quyền.');
+        showToast('Có lỗi xảy ra khi lưu ma trận phân quyền.', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Lỗi kết nối máy chủ: ' + err.message);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     } finally {
       setSavingMatrix(false);
     }
@@ -407,11 +408,11 @@ export default function UsersManagement({ metadata = { departments: [], users: [
   const handleSaveUserSubmit = async (e) => {
     e.preventDefault();
     if (!formData.username.trim()) {
-      alert('Vui lòng nhập tên tài khoản (Username)!');
+      showToast('Vui lòng nhập tên tài khoản (Username)!', 'warning');
       return;
     }
     if (!formData.fullName.trim()) {
-      alert('Vui lòng nhập Họ & Tên người dùng!');
+      showToast('Vui lòng nhập Họ & Tên người dùng!', 'warning');
       return;
     }
 
@@ -424,9 +425,11 @@ export default function UsersManagement({ metadata = { departments: [], users: [
         });
         const data = await res.json();
         if (res.ok) {
+          showToast('Cập nhật thông tin tài khoản người dùng thành công!', 'success');
           setUsersList(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...formData } : u));
+          setUserDrawerOpen(false);
         } else {
-          alert(data.error || 'Có lỗi khi cập nhật tài khoản');
+          showToast(data.error || 'Có lỗi khi cập nhật tài khoản', 'error');
         }
       } else {
         const res = await fetch(apiUrl('/api/users'), {
@@ -436,36 +439,38 @@ export default function UsersManagement({ metadata = { departments: [], users: [
         });
         const data = await res.json();
         if (res.ok) {
+          showToast('Tạo tài khoản người dùng mới thành công!', 'success');
           setUsersList(prev => [data.user || { id: Date.now(), ...formData, lastLogin: 'Vừa tạo' }, ...prev]);
+          setUserDrawerOpen(false);
         } else {
-          alert(data.error || 'Có lỗi khi tạo tài khoản người dùng');
+          showToast(data.error || 'Có lỗi khi tạo tài khoản người dùng', 'error');
         }
       }
     } catch (err) {
       console.error('Save user API error:', err);
-      if (editingUser) {
-        setUsersList(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...formData } : u));
-      } else {
-        setUsersList(prev => [{ id: Date.now(), ...formData, lastLogin: 'Chưa đăng nhập' }, ...prev]);
-      }
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
-
-    setUserDrawerOpen(false);
   };
 
   const handleToggleUserStatus = async (userId) => {
+    let nextStatus = 'ACTIVE';
     setUsersList(prev => prev.map(u => {
       if (u.id === userId) {
-        const nextStatus = u.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        nextStatus = u.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
         return { ...u, status: nextStatus };
       }
       return u;
     }));
 
     try {
-      await fetch(apiUrl(`/api/users/${userId}/toggle-status`), { method: 'PATCH' });
+      const res = await fetch(apiUrl(`/api/users/${userId}/toggle-status`), { method: 'PATCH' });
+      if (res.ok) {
+        showToast(`Đã ${nextStatus === 'ACTIVE' ? 'kích hoạt' : 'khóa'} tài khoản người dùng!`, 'success');
+      } else {
+        showToast('Có lỗi khi thay đổi trạng thái tài khoản', 'error');
+      }
     } catch (e) {
-      console.warn('Toggle status API error:', e);
+      showToast('Lỗi khi thay đổi trạng thái: ' + e.message, 'error');
     }
   };
 
@@ -478,9 +483,14 @@ export default function UsersManagement({ metadata = { departments: [], users: [
       setConfirmDeleteModal(null);
 
       try {
-        await fetch(apiUrl(`/api/users/${targetId}`), { method: 'DELETE' });
+        const res = await fetch(apiUrl(`/api/users/${targetId}`), { method: 'DELETE' });
+        if (res.ok) {
+          showToast('Xóa tài khoản người dùng thành công!', 'success');
+        } else {
+          showToast('Không thể xóa tài khoản này!', 'error');
+        }
       } catch (e) {
-        console.warn('Delete user API error:', e);
+        showToast('Lỗi khi xóa tài khoản: ' + e.message, 'error');
       }
     }
   };

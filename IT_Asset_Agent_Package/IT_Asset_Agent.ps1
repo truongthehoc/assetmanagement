@@ -5,7 +5,7 @@
 # ==============================================================================
 
 Param (
-    [string]$ServerUrl = "http://10.30.11.152:3001",
+    [string]$ServerUrl = "http://localhost:3001",
     [string]$SecretKey = "AssetManagementAgentSecretKey2026",
     [int]$IntervalMinutes = 10
 )

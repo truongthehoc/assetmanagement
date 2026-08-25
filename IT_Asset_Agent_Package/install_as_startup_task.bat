@@ -17,7 +17,7 @@ if %errorlevel% neq 0 (
 
 set TASK_NAME=ITAssetManagementAgent
 set AGENT_SCRIPT=%~dp0IT_Asset_Agent.ps1
-set SERVER_URL=http://localhost:5000
+set SERVER_URL=http://localhost:3001
 
 echo Registering Scheduled Task '%TASK_NAME%'...
 

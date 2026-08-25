@@ -178,6 +178,7 @@ function DatePickerVN({ value, onChange, isLight }) {
 }
 
 export default function AssetsList({ assets = [], metadata, onRefresh, theme, onSelectAsset }) {
+  const { showToast } = useToast();
   const [filterStatus, setFilterStatus] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -371,7 +372,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
   const handleCreateManualAssetSubmit = async (e) => {
     e.preventDefault();
     if (!mHostname.trim()) {
-      alert('Vui lòng nhập Tên máy / Thiết bị!');
+      showToast('Vui lòng nhập Tên máy / Thiết bị!', 'warning');
       return;
     }
 
@@ -411,14 +412,15 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
       });
       const data = await res.json();
       if (res.ok) {
+        showToast('Khai báo tài sản thủ công mới thành công!', 'success');
         setCreateManualDrawer(false);
         if (onRefresh) await onRefresh();
       } else {
-        alert(data.error || 'Có lỗi xảy ra khi tạo tài sản thủ công');
+        showToast(data.error || 'Có lỗi xảy ra khi tạo tài sản thủ công', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Không thể kết nối đến máy chủ.');
+      showToast('Không thể kết nối đến máy chủ.', 'error');
     }
   };
 
@@ -638,7 +640,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
 
     // Validation for allocation target
     if (isAllocation && allocationTarget === 'EMPLOYEE' && (!toUserId || isNaN(parseInt(toUserId, 10)))) {
-      alert('Vui lòng chọn Nhân viên nhận bàn giao trước khi bấm lưu!');
+      showToast('Vui lòng chọn Nhân viên nhận bàn giao trước khi bấm lưu!', 'warning');
       return;
     }
 
@@ -667,14 +669,15 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
       
       const data = await res.json();
       if (res.ok && data.status === 'success') {
+        showToast(isAllocation ? 'Cấp phát tài sản thành công!' : 'Thu hồi tài sản thành công!', 'success');
         setTransferDrawerAsset(null);
         if (onRefresh) await onRefresh();
       } else {
-        alert(data.error || data.message || 'Lỗi khi thực hiện cấp phát / thu hồi');
+        showToast(data.error || data.message || 'Lỗi khi thực hiện cấp phát / thu hồi', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Lỗi kết nối máy chủ: ' + err.message);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
@@ -686,7 +689,7 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
     const fileListString = poFiles.map(f => f.name).join(',');
 
     try {
-      await fetch(apiUrl(`/api/assets/${editDrawerAsset.id}/procurement`), {
+      const res = await fetch(apiUrl(`/api/assets/${editDrawerAsset.id}/procurement`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -703,10 +706,17 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
           notes: assetNotes || null
         })
       });
-      setEditDrawerAsset(null);
-      if (onRefresh) await onRefresh();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Cập nhật thông tin tài sản thành công!', 'success');
+        setEditDrawerAsset(null);
+        if (onRefresh) await onRefresh();
+      } else {
+        showToast(data.error || 'Có lỗi khi cập nhật tài sản!', 'error');
+      }
     } catch (err) {
       console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
@@ -727,14 +737,15 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
       });
       const data = await res.json();
       if (res.ok) {
+        showToast('Làm thủ tục thanh lý tài sản thành công!', 'success');
         setDisposalDrawerAsset(null);
         if (onRefresh) await onRefresh();
       } else {
-        alert(data.error || 'Có lỗi xảy ra khi làm thủ tục thanh lý');
+        showToast(data.error || 'Có lỗi xảy ra khi làm thủ tục thanh lý', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Lỗi kết nối máy chủ: ' + err.message);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
@@ -755,14 +766,15 @@ export default function AssetsList({ assets = [], metadata, onRefresh, theme, on
       });
       const data = await res.json();
       if (res.ok) {
+        showToast('Chuyển tài sản sang trạng thái bảo trì thành công!', 'success');
         setMaintenanceDrawerAsset(null);
         if (onRefresh) await onRefresh();
       } else {
-        alert(data.error || 'Có lỗi xảy ra khi chuyển sang bảo trì');
+        showToast(data.error || 'Có lỗi xảy ra khi chuyển sang bảo trì', 'error');
       }
     } catch (err) {
       console.error(err);
-      alert('Lỗi kết nối máy chủ: ' + err.message);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 

@@ -77,7 +77,7 @@ function DatePickerVN({ value, onChange, isLight }) {
   );
 }
 
-export default function DiscoveryQueue({ pending, metadata, onApprove, onReject, onTriggerScan, theme }) {
+export default function DiscoveryQueue({ pending, metadata, onApprove, onReject, onTriggerScan, onRefresh, theme }) {
   const [selectedDev, setSelectedDev] = useState(null);
   const [scanning, setScanning] = useState(false);
   const isLight = theme === 'light';
@@ -138,11 +138,16 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
     setDeletingId(devId);
     try {
       const res = await fetch(apiUrl(`/api/discovery/${devId}`), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
-        if (onTriggerScan) await onTriggerScan();
+        showToast('Xóa thiết bị khỏi danh sách chờ thành công!', 'success');
+        if (onRefresh) await onRefresh();
+        else if (onTriggerScan) await onTriggerScan();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi xóa thiết bị!', 'error');
       }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     } finally {
       setDeletingId(null);
     }
@@ -154,12 +159,17 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
     setClearingAll(true);
     try {
       const res = await fetch(apiUrl('/api/discovery/clear-all'), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
+        showToast('Đã xóa toàn bộ danh sách thiết bị chờ!', 'success');
         setCurrentPage(1);
-        if (onTriggerScan) await onTriggerScan();
+        if (onRefresh) await onRefresh();
+        else if (onTriggerScan) await onTriggerScan();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi làm sạch danh sách!', 'error');
       }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     } finally {
       setClearingAll(false);
     }

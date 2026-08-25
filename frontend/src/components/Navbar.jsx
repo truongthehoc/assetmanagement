@@ -235,10 +235,10 @@ export default function Navbar({
         <div className="relative" ref={userMenuRef}>
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className={`flex items-center gap-3 p-1.5 pr-3 rounded-2xl border transition duration-200 ${
+            className={`flex items-center gap-2.5 p-1 pr-2 rounded-2xl transition duration-200 ${
               isLight 
-                ? 'bg-slate-100/80 border-slate-200 hover:bg-slate-200/80 text-slate-800' 
-                : 'bg-slate-900 border-slate-800 hover:bg-slate-800 text-white'
+                ? 'hover:bg-slate-100/80 text-slate-800' 
+                : 'hover:bg-slate-800/60 text-white'
             }`}
           >
             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-500 to-blue-600 font-bold text-white flex items-center justify-center text-xs shadow-sm">

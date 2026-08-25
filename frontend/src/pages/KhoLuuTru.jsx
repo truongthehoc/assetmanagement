@@ -16,8 +16,10 @@ import {
   AlertCircle
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 export default function KhoLuuTru({ theme, metadata }) {
+  const { showToast } = useToast();
   const [warehouses, setWarehouses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,7 +86,7 @@ export default function KhoLuuTru({ theme, metadata }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) {
-      alert('Vui lòng nhập Tên kho lưu trữ!');
+      showToast('Vui lòng nhập Tên kho lưu trữ!', 'warning');
       return;
     }
 
@@ -99,7 +101,7 @@ export default function KhoLuuTru({ theme, metadata }) {
     };
 
     try {
-      const url = editingId ? `/api/kho-luu-tru/${editingId}` : '/api/kho-luu-tru';
+      const url = editingId ? apiUrl(`/api/kho-luu-tru/${editingId}`) : apiUrl('/api/kho-luu-tru');
       const method = editingId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -108,16 +110,16 @@ export default function KhoLuuTru({ theme, metadata }) {
         body: JSON.stringify(payload)
       });
 
+      const data = await res.json().catch(() => ({}));
       if (res.ok) {
+        showToast(editingId ? 'Cập nhật kho thành công!' : 'Thêm mới kho thành công!', 'success');
         setDrawerOpen(false);
         fetchWarehouses();
       } else {
-        const errData = await res.json();
-        alert(errData.error || 'Có lỗi xảy ra khi lưu thông tin kho lưu trữ');
+        showToast(data.error || 'Có lỗi xảy ra khi lưu thông tin kho lưu trữ', 'error');
       }
     } catch (err) {
-      console.error(err);
-      alert('Không thể kết nối đến máy chủ.');
+      showToast('Không thể kết nối đến máy chủ.', 'error');
     }
   };
 
@@ -127,13 +129,13 @@ export default function KhoLuuTru({ theme, metadata }) {
     try {
       const res = await fetch(apiUrl(`/api/kho-luu-tru/${id}`), { method: 'DELETE' });
       if (res.ok) {
+        showToast('Xóa kho lưu trữ thành công!', 'success');
         fetchWarehouses();
       } else {
-        alert('Không thể xóa kho lưu trữ này.');
+        showToast('Không thể xóa kho lưu trữ này.', 'error');
       }
     } catch (err) {
-      console.error(err);
-      alert('Có lỗi xảy ra khi xóa.');
+      showToast('Có lỗi xảy ra khi xóa.', 'error');
     }
   };
 

@@ -23,6 +23,7 @@ import Login from './pages/Login';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
 import { apiUrl } from './utils/api';
+import { useToast } from './context/ToastContext';
 
 // Helper to read initial tab and asset ID from URL hash or localStorage
 const getInitialState = () => {
@@ -45,6 +46,7 @@ const getInitialState = () => {
 };
 
 export default function App() {
+  const { showToast } = useToast();
   const initialState = getInitialState();
   const [activeTab, setActiveTab] = useState(initialState.tab);
   const [selectedAssetId, setSelectedAssetId] = useState(initialState.assetId);
@@ -223,53 +225,76 @@ export default function App() {
         body: JSON.stringify(onboardPayload)
       });
       const data = await res.json();
-      await fetchAllData();
-      if (data.assetId) {
-        handleOpenAssetDetail(data.assetId);
+      if (res.ok) {
+        showToast('Phê duyệt & Định danh tài sản thành công!', 'success');
+        await fetchAllData();
+        if (data.assetId) {
+          handleOpenAssetDetail(data.assetId);
+        } else {
+          setActiveTab('assets');
+        }
       } else {
-        setActiveTab('assets');
+        showToast(data.error || 'Phê duyệt thất bại!', 'error');
       }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
   const handleRejectDevice = async (pendingId) => {
     try {
-      await fetch(apiUrl('/api/discovery/reject'), {
+      const res = await fetch(apiUrl('/api/discovery/reject'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ pendingId })
       });
-      await fetchAllData();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Đã từ chối thiết bị khỏi danh sách chờ!', 'success');
+        await fetchAllData();
+      } else {
+        showToast(data.error || 'Từ chối thất bại!', 'error');
+      }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
   const handleResolveDrift = async (alertId, updateBaseline) => {
     try {
-      await fetch(apiUrl(`/api/drifts/${alertId}/resolve`), {
+      const res = await fetch(apiUrl(`/api/drifts/${alertId}/resolve`), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ resolvedBy: 'IT Admin', updateBaseline })
       });
-      await fetchAllData();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Đã xử lý cảnh báo biến động cấu hình thành công!', 'success');
+        await fetchAllData();
+      } else {
+        showToast(data.error || 'Xử lý cảnh báo thất bại!', 'error');
+      }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
   const handleTransferAsset = async (transferPayload) => {
     try {
-      await fetch(apiUrl('/api/lifecycle/transfer'), {
+      const res = await fetch(apiUrl('/api/lifecycle/transfer'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(transferPayload)
       });
-      await fetchAllData();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Thao tác Cấp phát / Thu hồi / Chuyển giao tài sản thành công!', 'success');
+        await fetchAllData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi bàn giao tài sản!', 'error');
+      }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
@@ -415,6 +440,7 @@ export default function App() {
                   onApprove={handleApproveDevice} 
                   onReject={handleRejectDevice}
                   onTriggerScan={handleTriggerRealScan}
+                  onRefresh={fetchAllData}
                   theme={theme}
                 />
               )}

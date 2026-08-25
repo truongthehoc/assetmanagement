@@ -11,6 +11,7 @@ import {
   ChevronDown
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 // Custom Searchable Employee Combobox Select Component with Clear Button & Empty Option
 function SearchableEmployeeSelect({ employees, value, onChange, placeholder, isLight }) {
@@ -208,31 +209,54 @@ export default function KhoaPhong({ theme }) {
     setKhoaDrawer(true);
   };
 
+  const { showToast } = useToast();
+
   const handleKhoaSubmit = async (e) => {
     e.preventDefault();
     const payload = { code: khoaCode, name: khoaName, managerName: khoaManager || null, description: khoaDesc };
 
-    if (editingKhoa) {
-      await fetch(apiUrl(`/api/khoa/${editingKhoa.id}`), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } else {
-      await fetch(apiUrl('/api/khoa'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+    try {
+      let res;
+      if (editingKhoa) {
+        res = await fetch(apiUrl(`/api/khoa/${editingKhoa.id}`), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(apiUrl('/api/khoa'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast(editingKhoa ? 'Cập nhật Khoa / Phòng thành công!' : 'Thêm mới Khoa / Phòng thành công!', 'success');
+        setKhoaDrawer(false);
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi lưu thông tin Khoa!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
-    setKhoaDrawer(false);
-    await fetchData();
   };
 
   const handleDeleteKhoa = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa Khoa này? Tất cả các Phòng thuộc Khoa cũng sẽ bị xóa.')) return;
-    await fetch(apiUrl(`/api/khoa/${id}`), { method: 'DELETE' });
-    await fetchData();
+    try {
+      const res = await fetch(apiUrl(`/api/khoa/${id}`), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Xóa Khoa thành công!', 'success');
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi xóa Khoa!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+    }
   };
 
   // --- PHÒNG DRAWER HANDLERS ---
@@ -266,27 +290,48 @@ export default function KhoaPhong({ theme }) {
       managerName: phongManager || null
     };
 
-    if (editingPhong) {
-      await fetch(apiUrl(`/api/phong/${editingPhong.id}`), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } else {
-      await fetch(apiUrl('/api/phong'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+    try {
+      let res;
+      if (editingPhong) {
+        res = await fetch(apiUrl(`/api/phong/${editingPhong.id}`), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(apiUrl('/api/phong'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast(editingPhong ? 'Cập nhật Vị trí / Phòng làm việc thành công!' : 'Thêm Vị trí / Phòng làm việc mới thành công!', 'success');
+        setPhongDrawer(false);
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi lưu thông tin Phòng!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
-    setPhongDrawer(false);
-    await fetchData();
   };
 
   const handleDeletePhong = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa Phòng này?')) return;
-    await fetch(apiUrl(`/api/phong/${id}`), { method: 'DELETE' });
-    await fetchData();
+    try {
+      const res = await fetch(apiUrl(`/api/phong/${id}`), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Xóa Phòng thành công!', 'success');
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi xóa Phòng!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+    }
   };
 
   const filteredKhoa = khoaList.filter(k => 

@@ -228,7 +228,7 @@ async function deletePendingDevice(req, res) {
 // Clear ALL pending devices in discovery queue
 async function clearAllPending(req, res) {
     try {
-        await db.query("DELETE FROM devices_pending WHERE status = 'PENDING'");
+        await db.query("DELETE FROM devices_pending WHERE status = 'PENDING' OR status IS NULL OR status = '' OR status = 'pending'");
         return res.json({ status: 'success', message: 'Đã xóa toàn bộ danh sách thiết bị chờ duyệt để sẵn sàng quét mới.' });
     } catch (err) {
         return res.status(500).json({ error: err.message });

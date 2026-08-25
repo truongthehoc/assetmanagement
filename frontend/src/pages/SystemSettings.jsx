@@ -18,8 +18,10 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 export default function SystemSettings({ theme, onSettingsUpdated }) {
+  const { showToast } = useToast();
   const isLight = theme === 'light';
   const cardClass = isLight ? 'glass-card-light' : 'glass-card-dark';
 
@@ -93,12 +95,15 @@ export default function SystemSettings({ theme, onSettingsUpdated }) {
           onSettingsUpdated({ orgInfo, systemInfo, config });
         }
 
+        showToast('Lưu toàn bộ cài đặt hệ thống thành công!', 'success');
         setSavedSuccess(true);
         setTimeout(() => setSavedSuccess(false), 4000);
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi lưu cấu hình.', 'error');
       }
     } catch (err) {
       console.error('Error saving settings to server:', err);
-      alert('Có lỗi xảy ra khi lưu cấu hình lên Server.');
+      showToast('Có lỗi xảy ra khi lưu cấu hình lên Server.', 'error');
     }
   };
 

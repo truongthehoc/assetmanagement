@@ -10,8 +10,10 @@ import {
   Layers
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 export default function LoaiTaiSan({ theme }) {
+  const { showToast } = useToast();
   const [types, setTypes] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -63,28 +65,49 @@ export default function LoaiTaiSan({ theme }) {
     e.preventDefault();
     const payload = { code, name, description };
 
-    if (editingType) {
-      await fetch(apiUrl(`/api/loai-tai-san/${editingType.id}`), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } else {
-      await fetch(apiUrl('/api/loai-tai-san'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    }
+    try {
+      let res;
+      if (editingType) {
+        res = await fetch(apiUrl(`/api/loai-tai-san/${editingType.id}`), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(apiUrl('/api/loai-tai-san'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
 
-    setDrawerOpen(false);
-    await fetchData();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast(editingType ? 'Cập nhật loại tài sản thành công!' : 'Thêm loại tài sản mới thành công!', 'success');
+        setDrawerOpen(false);
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi lưu loại tài sản!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+    }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa loại tài sản này?')) return;
-    await fetch(apiUrl(`/api/loai-tai-san/${id}`), { method: 'DELETE' });
-    await fetchData();
+    try {
+      const res = await fetch(apiUrl(`/api/loai-tai-san/${id}`), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Xóa loại tài sản thành công!', 'success');
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi xóa loại tài sản!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+    }
   };
 
   const filteredTypes = types.filter(t => 

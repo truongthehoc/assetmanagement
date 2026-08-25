@@ -9,8 +9,10 @@ import {
   Users
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 export default function ChucDanh({ theme }) {
+  const { showToast } = useToast();
   const [chucDanhList, setChucDanhList] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -62,28 +64,49 @@ export default function ChucDanh({ theme }) {
     e.preventDefault();
     const payload = { code, name, description };
 
-    if (editingItem) {
-      await fetch(apiUrl(`/api/chuc-danh/${editingItem.id}`), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } else {
-      await fetch(apiUrl('/api/chuc-danh'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    }
+    try {
+      let res;
+      if (editingItem) {
+        res = await fetch(apiUrl(`/api/chuc-danh/${editingItem.id}`), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(apiUrl('/api/chuc-danh'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
 
-    setDrawerOpen(false);
-    await fetchData();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast(editingItem ? 'Cập nhật chức danh thành công!' : 'Thêm mới chức danh thành công!', 'success');
+        setDrawerOpen(false);
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi lưu chức danh!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+    }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa Chức danh / Chức vụ này?')) return;
-    await fetch(apiUrl(`/api/chuc-danh/${id}`), { method: 'DELETE' });
-    await fetchData();
+    try {
+      const res = await fetch(apiUrl(`/api/chuc-danh/${id}`), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Xóa chức danh thành công!', 'success');
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi xóa chức danh!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+    }
   };
 
   const filteredList = chucDanhList.filter(item =>

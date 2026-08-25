@@ -13,8 +13,10 @@ import {
   Briefcase
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 export default function NhanVien({ theme }) {
+  const { showToast } = useToast();
   const [employees, setEmployees] = useState([]);
   const [khoaList, setKhoaList] = useState([]);
   const [phongList, setPhongList] = useState([]);
@@ -117,43 +119,70 @@ export default function NhanVien({ theme }) {
       status
     };
 
-    if (editingEmp) {
-      await fetch(apiUrl(`/api/employees/${editingEmp.id}`), {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-    } else {
-      await fetch(apiUrl('/api/employees'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
+    try {
+      let res;
+      if (editingEmp) {
+        res = await fetch(apiUrl(`/api/employees/${editingEmp.id}`), {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } else {
+        res = await fetch(apiUrl('/api/employees'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      }
+      
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast(editingEmp ? 'Cập nhật thông tin nhân viên thành công!' : 'Thêm mới nhân viên thành công!', 'success');
+        setDrawerOpen(false);
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi lưu nhân viên!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
-
-    setDrawerOpen(false);
-    await fetchData();
   };
 
   // Toggle Employee Status Handler (Enable / Disable Touch Button)
   const handleToggleStatus = async (emp) => {
     const newStatus = emp.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
-      await fetch(apiUrl(`/api/employees/${emp.id}/toggle-status`), {
+      const res = await fetch(apiUrl(`/api/employees/${emp.id}/toggle-status`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
       });
-      await fetchData();
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast(`Đã chuyển trạng thái nhân viên sang ${newStatus === 'ACTIVE' ? 'Hoạt động' : 'Tạm ngưng'}`, 'success');
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi khi cập nhật trạng thái nhân viên!', 'error');
+      }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
   const handleDelete = async (id) => {
     if (!window.confirm('Bạn có chắc chắn muốn xóa nhân viên này?')) return;
-    await fetch(apiUrl(`/api/employees/${id}`), { method: 'DELETE' });
-    await fetchData();
+    try {
+      const res = await fetch(apiUrl(`/api/employees/${id}`), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast('Xóa hồ sơ nhân viên thành công!', 'success');
+        await fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi xóa nhân viên!', 'error');
+      }
+    } catch (err) {
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+    }
   };
 
   const filteredEmployees = employees.filter(e => {

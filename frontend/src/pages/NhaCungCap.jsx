@@ -15,8 +15,10 @@ import {
   Building
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 export default function NhaCungCap({ theme }) {
+  const { showToast } = useToast();
   const [suppliers, setSuppliers] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,7 @@ export default function NhaCungCap({ theme }) {
   // Form states
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
+  const [taxCode, setTaxCode] = useState('');
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -58,8 +61,9 @@ export default function NhaCungCap({ theme }) {
 
   const openAdd = () => {
     setEditingSupplier(null);
-    setCode(`NCC-${Math.floor(1000 + Math.random() * 9000)}`);
+    setCode(`NCC-${Math.floor(100 + Math.random() * 900)}`);
     setName('');
+    setTaxCode('');
     setContactPerson('');
     setPhone('');
     setEmail('');
@@ -72,6 +76,7 @@ export default function NhaCungCap({ theme }) {
     setEditingSupplier(s);
     setCode(s.code || '');
     setName(s.name || '');
+    setTaxCode(s.tax_code || '');
     setContactPerson(s.contact_person || '');
     setPhone(s.phone || '');
     setEmail(s.email || '');
@@ -82,11 +87,10 @@ export default function NhaCungCap({ theme }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!name.trim()) return;
-
     const payload = {
       code,
       name,
+      tax_code: taxCode,
       contact_person: contactPerson,
       phone,
       email,
@@ -95,23 +99,31 @@ export default function NhaCungCap({ theme }) {
     };
 
     try {
+      let res;
       if (editingSupplier) {
-        await fetch(apiUrl(`/api/nha-cung-cap/${editingSupplier.id}`), {
+        res = await fetch(apiUrl(`/api/nha-cung-cap/${editingSupplier.id}`), {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
       } else {
-        await fetch(apiUrl('/api/nha-cung-cap'), {
+        res = await fetch(apiUrl('/api/nha-cung-cap'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
         });
       }
-      setDrawerOpen(false);
-      fetchData();
+      
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        showToast(editingSupplier ? 'Cập nhật nhà cung cấp thành công!' : 'Thêm mới nhà cung cấp thành công!', 'success');
+        setDrawerOpen(false);
+        fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi lưu nhà cung cấp!', 'error');
+      }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
@@ -123,12 +135,18 @@ export default function NhaCungCap({ theme }) {
   const handleDelete = async () => {
     if (!deletingSupplier) return;
     try {
-      await fetch(apiUrl(`/api/nha-cung-cap/${deletingSupplier.id}`), { method: 'DELETE' });
+      const res = await fetch(apiUrl(`/api/nha-cung-cap/${deletingSupplier.id}`), { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
       setDeleteModal(false);
       setDeletingSupplier(null);
-      fetchData();
+      if (res.ok) {
+        showToast('Xóa nhà cung cấp thành công!', 'success');
+        fetchData();
+      } else {
+        showToast(data.error || 'Có lỗi xảy ra khi xóa nhà cung cấp!', 'error');
+      }
     } catch (err) {
-      console.error(err);
+      showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     }
   };
 
