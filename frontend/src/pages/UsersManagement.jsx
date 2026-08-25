@@ -37,8 +37,10 @@ import {
   Grid
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 export default function UsersManagement({ metadata = { departments: [], users: [] }, theme }) {
+  const { showToast } = useToast();
   const isLight = theme === 'light';
   const cardClass = isLight ? 'glass-card-light' : 'glass-card-dark';
 

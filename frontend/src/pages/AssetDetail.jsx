@@ -41,6 +41,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import HandoverVoucherModal from '../components/HandoverVoucherModal';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 // Custom Searchable Employee Select for AssetDetail
 function SearchableEmployeeSelect({ employees = [], value, onChange, placeholder, isLight }) {
@@ -210,6 +211,7 @@ function getFormattedActionBadge(action) {
 }
 
 export default function AssetDetail({ assetId, onBack, theme, onTransfer, onResolveDrift }) {
+  const { showToast } = useToast();
   const [asset, setAsset] = useState(null);
   const [metadata, setMetadata] = useState({ departments: [], locations: [], users: [] });
   const [khoaList, setKhoaList] = useState([]);
