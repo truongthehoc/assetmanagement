@@ -186,9 +186,9 @@ async function approveDevice(req, res) {
 
         // Record Initial Onboarding Audit Lifecycle Log
         await db.query(
-            `INSERT INTO asset_lifecycle_logs (asset_id, action, from_user_id, to_user_id, from_department_id, to_department_id, notes)
-             VALUES (?, 'ONBOARDED', NULL, ?, NULL, ?, ?)`,
-            [newAssetId, userId || null, departmentId || null, `Phê duyệt định danh tài sản '${assetTag}' từ Discovery Queue`]
+            `INSERT INTO lifecycle_logs (asset_id, action, from_user_id, to_user_id, from_status, to_status, notes, performed_by)
+             VALUES (?, 'ONBOARDED', NULL, ?, 'NEW', 'IN_USE', ?, 'IT Administrator')`,
+            [newAssetId, userId || null, `Phê duyệt định danh tài sản '${assetTag}' từ Discovery Queue`]
         );
 
         return res.json({
