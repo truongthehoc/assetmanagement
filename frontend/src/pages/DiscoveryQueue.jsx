@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import { apiUrl } from '../utils/api';
+import { useToast } from '../context/ToastContext';
 
 // Custom DatePicker Component displaying strictly dd/mm/yyyy format in the input field
 function DatePickerVN({ value, onChange, isLight }) {
@@ -78,6 +79,7 @@ function DatePickerVN({ value, onChange, isLight }) {
 }
 
 export default function DiscoveryQueue({ pending, metadata, onApprove, onReject, onTriggerScan, onRefresh, theme }) {
+  const { showToast } = useToast();
   const [selectedDev, setSelectedDev] = useState(null);
   const [scanning, setScanning] = useState(false);
   const isLight = theme === 'light';
@@ -92,13 +94,17 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
   const [netScanResult, setNetScanResult] = useState(null);
   const [netScanError, setNetScanError] = useState(null);
 
-  // Pagination, Search, Tabs & Clearing state
+  // Pagination, Search, Tabs, Optimistic Removed State & Clearing state
   const [activeTab, setActiveTab] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [deletingId, setDeletingId] = useState(null);
   const [clearingAll, setClearingAll] = useState(false);
+  const [removedIds, setRemovedIds] = useState([]);
+
+  // Active Pending List after optimistic local removal
+  const activePendingList = (pending || []).filter(item => !removedIds.includes(item.id));
 
   // Helper to check device type (Network IP scan vs Agent telemetry)
   const isNetworkDevice = (dev) => {
@@ -106,10 +112,10 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
     return (dev.agent_id && dev.agent_id.startsWith('NETSCAN-')) || Boolean(hw.deviceType);
   };
 
-  const networkPendingCount = pending.filter(dev => isNetworkDevice(dev)).length;
-  const agentPendingCount = pending.filter(dev => !isNetworkDevice(dev)).length;
+  const networkPendingCount = activePendingList.filter(dev => isNetworkDevice(dev)).length;
+  const agentPendingCount = activePendingList.filter(dev => !isNetworkDevice(dev)).length;
 
-  const filteredPending = pending.filter(dev => {
+  const filteredPending = activePendingList.filter(dev => {
     // 1. Filter by Discovery Category Tab
     const isNet = isNetworkDevice(dev);
     if (activeTab === 'NETWORK' && !isNet) return false;
@@ -136,17 +142,20 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
     if (!window.confirm('Bạn có chắc chắn muốn xóa thiết bị này khỏi danh sách chờ quét?')) return;
 
     setDeletingId(devId);
+    setRemovedIds(prev => [...prev, devId]);
+
     try {
       const res = await fetch(apiUrl(`/api/discovery/${devId}`), { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         showToast('Xóa thiết bị khỏi danh sách chờ thành công!', 'success');
         if (onRefresh) await onRefresh();
-        else if (onTriggerScan) await onTriggerScan();
       } else {
+        setRemovedIds(prev => prev.filter(id => id !== devId));
         showToast(data.error || 'Có lỗi xảy ra khi xóa thiết bị!', 'error');
       }
     } catch (err) {
+      setRemovedIds(prev => prev.filter(id => id !== devId));
       showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     } finally {
       setDeletingId(null);
@@ -154,9 +163,12 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
   };
 
   const handleClearAllPending = async () => {
-    if (!window.confirm(`⚠️ Bạn có chắc chắn muốn XÓA TOÀN BỘ ${pending.length} thiết bị trong danh sách chờ để làm sạch và quét lại từ đầu không?`)) return;
+    if (!window.confirm(`⚠️ Bạn có chắc chắn muốn XÓA TOÀN BỘ ${activePendingList.length} thiết bị trong danh sách chờ để làm sạch và quét lại từ đầu không?`)) return;
 
     setClearingAll(true);
+    const allIds = activePendingList.map(d => d.id);
+    setRemovedIds(prev => [...prev, ...allIds]);
+
     try {
       const res = await fetch(apiUrl('/api/discovery/clear-all'), { method: 'DELETE' });
       const data = await res.json().catch(() => ({}));
@@ -164,11 +176,12 @@ export default function DiscoveryQueue({ pending, metadata, onApprove, onReject,
         showToast('Đã xóa toàn bộ danh sách thiết bị chờ!', 'success');
         setCurrentPage(1);
         if (onRefresh) await onRefresh();
-        else if (onTriggerScan) await onTriggerScan();
       } else {
+        setRemovedIds(prev => prev.filter(id => !allIds.includes(id)));
         showToast(data.error || 'Có lỗi xảy ra khi làm sạch danh sách!', 'error');
       }
     } catch (err) {
+      setRemovedIds(prev => prev.filter(id => !allIds.includes(id)));
       showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
     } finally {
       setClearingAll(false);
