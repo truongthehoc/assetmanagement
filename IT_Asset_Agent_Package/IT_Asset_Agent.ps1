@@ -201,12 +201,12 @@ function Send-TelemetryReport {
     
     try {
         $headers = @{
-            "Content-Type" = "application/json"
             "X-Agent-Signature" = $signature
             "X-Agent-Timestamp" = $timestamp
         }
+        $utf8Body = [System.Text.Encoding]::UTF8.GetBytes($payloadJson)
 
-        $response = Invoke-RestMethod -Uri $endpoint -Method Post -Headers $headers -Body $payloadJson -TimeoutSec 15
+        $response = Invoke-RestMethod -Uri $endpoint -Method Post -ContentType "application/json; charset=utf-8" -Headers $headers -Body $utf8Body -TimeoutSec 15
         Write-Host "[SERVER RESPONSE] Status: SUCCESS | Message: $($response.message)`n" -ForegroundColor Green
     }
     catch {

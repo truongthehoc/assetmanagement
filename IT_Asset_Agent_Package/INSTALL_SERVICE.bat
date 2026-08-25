@@ -32,7 +32,8 @@ schtasks /create /tn "%TASK_NAME%" /tr "powershell.exe -NoProfile -ExecutionPoli
 
 if %errorlevel% equ 0 (
     echo.
-    echo [2/2] Kich hoat dot quet telemetry dau tien...
+    echo [2/2] Gui bao cao telemetry khoi tao ve Server (%SERVER_URL%)...
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '%AGENT_SCRIPT%' -ServerUrl '%SERVER_URL%' -IntervalMinutes 10"
     schtasks /run /tn "%TASK_NAME%" >nul 2>&1
     echo.
     echo ======================================================================
