@@ -116,6 +116,7 @@ async function initDB() {
         console.log('🔄 Dang kiem tra va khoi tao schema bang MySQL...');
 
         // Create every table individually with CREATE TABLE IF NOT EXISTS
+        const tableDDLs = [
             `CREATE TABLE IF NOT EXISTS devices_pending (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 agent_id VARCHAR(100) UNIQUE NOT NULL,
