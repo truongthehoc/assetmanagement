@@ -17,15 +17,10 @@ if %errorlevel% neq 0 (
     exit /b
 )
 
-set DEFAULT_SERVER=http://10.30.11.152:3001
-echo Machine IP Server mac dinh: %DEFAULT_SERVER%
-set /p SERVER_URL="Nhap diachi Server (Nhan Enter de dung mac dinh %DEFAULT_SERVER%): "
-if "%SERVER_URL%"=="" set SERVER_URL=%DEFAULT_SERVER%
-
-:: Auto-prepend http:// if user entered IP without protocol
-if not "%SERVER_URL:~0,7%"=="http://" if not "%SERVER_URL:~0,8%"=="https://" (
-    set SERVER_URL=http://%SERVER_URL%
-)
+set SERVER_URL=http://10.30.11.152:3001
+echo Machine IP Server mac dinh: %SERVER_URL%
+set /p USER_INPUT="Nhap diachi Server (Nhan Enter de dung mac dinh %SERVER_URL%): "
+if not "%USER_INPUT%"=="" set SERVER_URL=%USER_INPUT%
 
 set TASK_NAME=ITAssetManagementAgent
 set AGENT_SCRIPT=%~dp0IT_Asset_Agent.ps1
@@ -33,11 +28,11 @@ set AGENT_SCRIPT=%~dp0IT_Asset_Agent.ps1
 echo.
 echo [1/2] Dang dang ky Dich vu Windows Service ngam '%TASK_NAME%'...
 
-schtasks /create /tn "%TASK_NAME%" /tr "powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"%AGENT_SCRIPT%\" -ServerUrl \"%SERVER_URL%\" -IntervalMinutes 10" /sc ONSTART /ru "SYSTEM" /rl HIGHEST /f
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$u='%SERVER_URL%'; if (-not $u.StartsWith('http://') -and -not $u.StartsWith('https://')) { $u = 'http://' + $u }; schtasks /create /tn '%TASK_NAME%' /tr ('powershell.exe -NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File \"' + '%AGENT_SCRIPT%' + '\" -ServerUrl \"' + $u + '\" -IntervalMinutes 10') /sc ONSTART /ru 'SYSTEM' /rl HIGHEST /f"
 
 if %errorlevel% equ 0 (
     echo.
-    echo [2/2] Gui bao cao telemetry khoi tao ve Server (%SERVER_URL%)...
+    echo [2/2] Gui bao cao telemetry khoi tao ve Server...
     powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%AGENT_SCRIPT%" -ServerUrl "%SERVER_URL%" -RunOnce
     schtasks /run /tn "%TASK_NAME%" >nul 2>&1
     echo.
