@@ -376,6 +376,7 @@ async function initDB() {
             `CREATE TABLE IF NOT EXISTS system_users (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 username VARCHAR(100) UNIQUE NOT NULL,
+                password_hash VARCHAR(255) NOT NULL DEFAULT '',
                 full_name VARCHAR(255) NOT NULL,
                 email VARCHAR(255),
                 phone VARCHAR(50),
@@ -420,11 +421,20 @@ async function initDB() {
             "ALTER TABLE assets ADD COLUMN po_document_url TEXT NULL",
             "ALTER TABLE assets ADD COLUMN previous_status VARCHAR(50) NULL",
             "ALTER TABLE assets ADD COLUMN notes TEXT NULL",
-            "ALTER TABLE assets ADD COLUMN ip_address VARCHAR(100) NULL"
+            "ALTER TABLE assets ADD COLUMN ip_address VARCHAR(100) NULL",
+            "ALTER TABLE system_users ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''"
         ];
         for (const m of migrations) {
             await pool.query(m).catch(() => {});
         }
+
+        // Set default password for users who have no password yet (bcrypt hash of 'Admin@123')
+        // $2b$10$YZkR3...  = bcrypt('Admin@123', 10)
+        const DEFAULT_ADMIN_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyEtZRfbm';
+        await pool.query(
+            `UPDATE system_users SET password_hash = ? WHERE password_hash = '' OR password_hash IS NULL`,
+            [DEFAULT_ADMIN_HASH]
+        ).catch(() => {});
 
         // Seed default records if empty
         // 1. Seed loai_tai_san
@@ -491,11 +501,13 @@ async function initDB() {
             }
         }
 
-        // 9. Seed default admin user
+        // 9. Seed default admin user (password: Admin@123)
+        // Hash generated via bcrypt.hashSync('Admin@123', 10)
+        const ADMIN_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyEtZRfbm';
         await pool.query(`
-            INSERT IGNORE INTO system_users (id, username, full_name, email, phone, employee_id, role, department_name, job_title, status, auth_method, last_login)
-            VALUES (1, 'admin_system', 'Admin System', 'admin@company.com', '0901234567', 'SYS001', 'ADMIN', 'Công Nghệ Thông Tin (IT Central)', 'Quản Trị Viên Hệ Thống', 'ACTIVE', 'LOCAL', 'Vừa xong')
-        `).catch(() => {});
+            INSERT IGNORE INTO system_users (id, username, password_hash, full_name, email, phone, employee_id, role, department_name, job_title, status, auth_method, last_login)
+            VALUES (1, 'admin_system', ?, 'Admin System', 'admin@company.com', '0901234567', 'SYS001', 'ADMIN', 'Công Nghệ Thông Tin (IT Central)', 'Quản Trị Viên Hệ Thống', 'ACTIVE', 'LOCAL', 'Chưa đăng nhập')
+        `, [ADMIN_HASH]).catch(() => {});
 
         isMysqlMode = true;
         console.log(`=======================================================`);

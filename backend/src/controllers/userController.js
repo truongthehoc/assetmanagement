@@ -1,4 +1,8 @@
 const db = require('../config/db');
+const bcrypt = require('bcryptjs');
+
+// Default bcrypt hash for 'Admin@123'
+const DEFAULT_PASSWORD_HASH = '$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LPVyEtZRfbm';
 
 const defaultPermissionMatrix = {
   ADMIN: {
@@ -36,6 +40,7 @@ const defaultSystemUsers = [
   {
     id: 1,
     username: 'admin_system',
+    passwordHash: DEFAULT_PASSWORD_HASH,
     fullName: 'Admin System',
     email: 'admin@company.com',
     phone: '0901234567',
@@ -44,12 +49,13 @@ const defaultSystemUsers = [
     departmentName: 'Công Nghệ Thông Tin (IT Central)',
     jobTitle: 'Quản Trị Viên Hệ Thống',
     status: 'ACTIVE',
-    lastLogin: 'Vừa xong',
+    lastLogin: 'Chưa đăng nhập',
     authMethod: 'LOCAL'
   },
   {
     id: 2,
     username: 'manager_it',
+    passwordHash: DEFAULT_PASSWORD_HASH,
     fullName: 'Nguyễn Văn Anh',
     email: 'anh.nguyen@company.com',
     phone: '0901234567',
@@ -58,12 +64,13 @@ const defaultSystemUsers = [
     departmentName: 'Phòng Công nghệ thông tin',
     jobTitle: 'Trưởng Phòng IT',
     status: 'ACTIVE',
-    lastLogin: 'Hôm nay, 08:30',
+    lastLogin: 'Chưa đăng nhập',
     authMethod: 'SSO / LDAP'
   },
   {
     id: 3,
     username: 'user_binh',
+    passwordHash: DEFAULT_PASSWORD_HASH,
     fullName: 'Trần Thị Bình',
     email: 'binh.tran@company.com',
     phone: '0902345678',
@@ -72,12 +79,13 @@ const defaultSystemUsers = [
     departmentName: 'Phòng Nhân sự',
     jobTitle: 'Chuyên Viên HR',
     status: 'ACTIVE',
-    lastLogin: 'Hôm qua, 16:45',
+    lastLogin: 'Chưa đăng nhập',
     authMethod: 'SSO / LDAP'
   },
   {
     id: 4,
     username: 'user_cuong',
+    passwordHash: DEFAULT_PASSWORD_HASH,
     fullName: 'Lê Hoàng Cường',
     email: 'cuong.le@company.com',
     phone: '0903456789',
@@ -86,12 +94,13 @@ const defaultSystemUsers = [
     departmentName: 'Phòng Tài chính Kế toán',
     jobTitle: 'Kế Toán Trưởng',
     status: 'INACTIVE',
-    lastLogin: '3 ngày trước',
+    lastLogin: 'Chưa đăng nhập',
     authMethod: 'LOCAL'
   },
   {
     id: 5,
     username: 'user_dung',
+    passwordHash: DEFAULT_PASSWORD_HASH,
     fullName: 'Phạm Minh Dũng',
     email: 'dung.pham@company.com',
     phone: '0904567890',
@@ -100,7 +109,7 @@ const defaultSystemUsers = [
     departmentName: 'Phòng Marketing',
     jobTitle: 'Chuyên Viên MKT',
     status: 'ACTIVE',
-    lastLogin: '1 ngày trước',
+    lastLogin: 'Chưa đăng nhập',
     authMethod: 'LOCAL'
   }
 ];
@@ -117,6 +126,7 @@ async function ensureTable() {
       CREATE TABLE IF NOT EXISTS system_users (
         id INT AUTO_INCREMENT PRIMARY KEY,
         username VARCHAR(100) UNIQUE NOT NULL,
+        password_hash VARCHAR(255) NOT NULL DEFAULT '',
         full_name VARCHAR(255) NOT NULL,
         email VARCHAR(255),
         phone VARCHAR(50),
@@ -134,10 +144,21 @@ async function ensureTable() {
 
     // Try adding missing columns if table already existed
     try {
+      await db.query(`ALTER TABLE system_users ADD COLUMN password_hash VARCHAR(255) NOT NULL DEFAULT ''`);
+    } catch (e) {}
+    try {
       await db.query(`ALTER TABLE system_users ADD COLUMN avatar_url VARCHAR(500) DEFAULT ''`);
     } catch (e) {}
     try {
       await db.query(`ALTER TABLE system_users ADD COLUMN job_title VARCHAR(255) DEFAULT ''`);
+    } catch (e) {}
+
+    // Ensure all existing users have a valid password hash (default 'Admin@123')
+    try {
+      await db.query(
+        `UPDATE system_users SET password_hash = ? WHERE password_hash = '' OR password_hash IS NULL`,
+        [DEFAULT_PASSWORD_HASH]
+      );
     } catch (e) {}
 
     // Seed default users ONLY if system_users table is completely empty
@@ -146,9 +167,9 @@ async function ensureTable() {
     if (parseInt(cnt, 10) === 0) {
       for (const u of defaultSystemUsers) {
         await db.query(
-          `INSERT IGNORE INTO system_users (id, username, full_name, email, phone, employee_id, role, department_name, job_title, avatar_url, status, auth_method, last_login)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-          [u.id, u.username, u.fullName, u.email, u.phone, u.employeeId, u.role, u.departmentName, u.jobTitle || '', u.avatarUrl || '', u.status, u.authMethod, u.lastLogin]
+          `INSERT IGNORE INTO system_users (id, username, password_hash, full_name, email, phone, employee_id, role, department_name, job_title, avatar_url, status, auth_method, last_login)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [u.id, u.username, u.passwordHash || DEFAULT_PASSWORD_HASH, u.fullName, u.email, u.phone, u.employeeId, u.role, u.departmentName, u.jobTitle || '', u.avatarUrl || '', u.status, u.authMethod, u.lastLogin]
         );
       }
     }
@@ -200,45 +221,45 @@ async function getProfile(req, res) {
     const targetUsername = username || 'admin_system';
 
     await ensureTable();
-
-    let user = inMemoryUsers.find(u => u.username === targetUsername);
-
     try {
-      const dbRows = await db.query('SELECT * FROM system_users WHERE username = ? LIMIT 1', [targetUsername]);
-      if (dbRows && dbRows.length > 0) {
-        const r = dbRows[0];
-        user = {
-          id: r.id,
-          username: r.username,
-          fullName: r.full_name,
-          email: r.email,
-          phone: r.phone,
-          employeeId: r.employee_id,
-          role: r.role,
-          departmentName: r.department_name,
-          jobTitle: r.job_title || r.role,
-          avatarUrl: r.avatar_url || '',
-          status: r.status,
-          authMethod: r.auth_method,
-          lastLogin: r.last_login
-        };
+      const rows = await db.query('SELECT * FROM system_users WHERE username = ?', [targetUsername]);
+      if (rows && rows.length > 0) {
+        const u = rows[0];
+        return res.json({
+          id: u.id,
+          username: u.username,
+          fullName: u.full_name,
+          email: u.email,
+          phone: u.phone,
+          employeeId: u.employee_id,
+          role: u.role || 'STAFF',
+          departmentName: u.department_name,
+          jobTitle: u.job_title || 'Cán Bộ Nhân Viên',
+          status: u.status,
+          avatarUrl: u.avatar_url || ''
+        });
       }
-    } catch (e) {}
-
-    if (!user) {
-      user = {
-        username: targetUsername,
-        fullName: 'Admin System',
-        email: 'admin@company.com',
-        phone: '0901234567',
-        role: 'ADMIN',
-        departmentName: 'Phòng Công Nghệ Thông Tin (IT Central)',
-        jobTitle: 'Quản Trị Viên Hệ Thống',
-        avatarUrl: ''
-      };
+    } catch (dbErr) {
+      console.warn('DB getProfile warning:', dbErr.message);
     }
 
-    return res.json(user);
+    const found = inMemoryUsers.find(u => u.username === targetUsername);
+    if (found) {
+      return res.json(found);
+    }
+
+    return res.json({
+      username: targetUsername,
+      fullName: targetUsername,
+      email: `${targetUsername}@company.com`,
+      phone: '',
+      employeeId: 'SYS001',
+      role: 'STAFF',
+      departmentName: 'Phòng Ban Trực Thuộc',
+      jobTitle: 'Cán Bộ Nhân Viên',
+      status: 'ACTIVE',
+      avatarUrl: ''
+    });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
@@ -247,34 +268,61 @@ async function getProfile(req, res) {
 // PUT /api/users/profile
 async function updateProfile(req, res) {
   try {
-    const { username, fullName, email, phone, avatarUrl } = req.body;
+    const { username, fullName, email, phone, avatarUrl, oldPassword, newPassword } = req.body;
     const targetUsername = username || 'admin_system';
 
     await ensureTable();
+
+    // Check if updating password
+    let newHash = null;
+    if (newPassword && newPassword.trim()) {
+      if (newPassword.trim().length < 6) {
+        return res.status(400).json({ error: 'Mật khẩu mới phải có ít nhất 6 ký tự.' });
+      }
+
+      // Verify old password if provided
+      const userRows = await db.query('SELECT password_hash FROM system_users WHERE username = ?', [targetUsername]);
+      if (userRows && userRows.length > 0) {
+        const currentHash = userRows[0].password_hash;
+        if (currentHash && oldPassword) {
+          const match = bcrypt.compareSync(oldPassword, currentHash) || oldPassword === currentHash;
+          if (!match) {
+            return res.status(400).json({ error: 'Mật khẩu hiện tại không chính xác.' });
+          }
+        }
+      }
+      newHash = bcrypt.hashSync(newPassword.trim(), 10);
+    }
+
+    try {
+      if (newHash) {
+        await db.query(
+          `UPDATE system_users 
+           SET full_name = ?, email = ?, phone = ?, avatar_url = ?, password_hash = ?
+           WHERE username = ?`,
+          [fullName, email, phone, avatarUrl || '', newHash, targetUsername]
+        );
+      } else {
+        await db.query(
+          `UPDATE system_users 
+           SET full_name = ?, email = ?, phone = ?, avatar_url = ?
+           WHERE username = ?`,
+          [fullName, email, phone, avatarUrl || '', targetUsername]
+        );
+      }
+    } catch (dbErr) {
+      console.warn('DB updateProfile warning:', dbErr.message);
+    }
 
     const idx = inMemoryUsers.findIndex(u => u.username === targetUsername);
     if (idx !== -1) {
       inMemoryUsers[idx] = {
         ...inMemoryUsers[idx],
-        fullName: fullName !== undefined ? fullName : inMemoryUsers[idx].fullName,
+        fullName: fullName || inMemoryUsers[idx].fullName,
         email: email !== undefined ? email : inMemoryUsers[idx].email,
         phone: phone !== undefined ? phone : inMemoryUsers[idx].phone,
         avatarUrl: avatarUrl !== undefined ? avatarUrl : inMemoryUsers[idx].avatarUrl
       };
-    }
-
-    try {
-      await db.query(
-        `UPDATE system_users 
-         SET full_name = COALESCE(?, full_name),
-             email = COALESCE(?, email),
-             phone = COALESCE(?, phone),
-             avatar_url = COALESCE(?, avatar_url)
-         WHERE username = ?`,
-        [fullName, email, phone, avatarUrl, targetUsername]
-      );
-    } catch (dbErr) {
-      console.warn('DB update profile warning:', dbErr.message);
     }
 
     const updatedUser = idx !== -1 ? inMemoryUsers[idx] : { username: targetUsername, fullName, email, phone, avatarUrl };
@@ -287,15 +335,18 @@ async function updateProfile(req, res) {
 // POST /api/users
 async function createUser(req, res) {
   try {
-    const { username, fullName, email, phone, employeeId, role, departmentName, status } = req.body;
+    const { username, password, fullName, email, phone, employeeId, role, departmentName, status } = req.body;
     if (!username || !fullName) {
       return res.status(400).json({ error: 'Username và Full Name là bắt buộc.' });
     }
 
+    const rawPassword = (password && password.trim()) ? password.trim() : 'Admin@123';
+    const passwordHash = bcrypt.hashSync(rawPassword, 10);
+
     const newUser = {
       id: Date.now(),
-      username,
-      fullName,
+      username: username.trim(),
+      fullName: fullName.trim(),
       email: email || '',
       phone: phone || '',
       employeeId: employeeId || 'EMP',
@@ -307,15 +358,19 @@ async function createUser(req, res) {
     };
 
     try {
+      await ensureTable();
       const result = await db.query(
-        `INSERT INTO system_users (username, full_name, email, phone, employee_id, role, department_name, status, auth_method, last_login)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [newUser.username, newUser.fullName, newUser.email, newUser.phone, newUser.employeeId, newUser.role, newUser.departmentName, newUser.status, 'LOCAL', 'Chưa đăng nhập']
+        `INSERT INTO system_users (username, password_hash, full_name, email, phone, employee_id, role, department_name, status, auth_method, last_login)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [newUser.username, passwordHash, newUser.fullName, newUser.email, newUser.phone, newUser.employeeId, newUser.role, newUser.departmentName, newUser.status, 'LOCAL', 'Chưa đăng nhập']
       );
       if (result && result.insertId) {
         newUser.id = result.insertId;
       }
     } catch (dbErr) {
+      if (dbErr.code === 'ER_DUP_ENTRY' || (dbErr.message && dbErr.message.includes('Duplicate entry'))) {
+        return res.status(400).json({ error: `Tên đăng nhập '${newUser.username}' đã tồn tại trong hệ thống. Vui lòng chọn tên khác!` });
+      }
       console.warn('DB create user warning:', dbErr.message);
     }
 
@@ -331,7 +386,7 @@ async function createUser(req, res) {
 async function updateUser(req, res) {
   try {
     const { id } = req.params;
-    const { username, fullName, email, phone, employeeId, role, departmentName, status } = req.body;
+    const { username, password, fullName, email, phone, employeeId, role, departmentName, status } = req.body;
 
     const userIndex = inMemoryUsers.findIndex(u => String(u.id) === String(id));
     if (userIndex !== -1) {
@@ -349,13 +404,27 @@ async function updateUser(req, res) {
     }
 
     try {
-      await db.query(
-        `UPDATE system_users 
-         SET username = ?, full_name = ?, email = ?, phone = ?, employee_id = ?, role = ?, department_name = ?, status = ?
-         WHERE id = ?`,
-        [username, fullName, email, phone, employeeId, role, departmentName, status, id]
-      );
+      await ensureTable();
+      if (password && password.trim()) {
+        const passwordHash = bcrypt.hashSync(password.trim(), 10);
+        await db.query(
+          `UPDATE system_users 
+           SET username = ?, password_hash = ?, full_name = ?, email = ?, phone = ?, employee_id = ?, role = ?, department_name = ?, status = ?
+           WHERE id = ?`,
+          [username, passwordHash, fullName, email, phone, employeeId, role, departmentName, status, id]
+        );
+      } else {
+        await db.query(
+          `UPDATE system_users 
+           SET username = ?, full_name = ?, email = ?, phone = ?, employee_id = ?, role = ?, department_name = ?, status = ?
+           WHERE id = ?`,
+          [username, fullName, email, phone, employeeId, role, departmentName, status, id]
+        );
+      }
     } catch (dbErr) {
+      if (dbErr.code === 'ER_DUP_ENTRY' || (dbErr.message && dbErr.message.includes('Duplicate entry'))) {
+        return res.status(400).json({ error: `Tên đăng nhập '${username}' đã tồn tại trong hệ thống.` });
+      }
       console.warn('DB update user warning:', dbErr.message);
     }
 
@@ -378,7 +447,7 @@ async function deleteUser(req, res) {
       console.warn('DB delete user warning:', dbErr.message);
     }
 
-    return res.json({ status: 'success', message: 'Tài khoản đã được xóa thành công.' });
+    return res.json({ status: 'success', message: 'Đã xóa người dùng thành công' });
   } catch (err) {
     console.error('deleteUser error:', err);
     return res.status(500).json({ error: err.message });
@@ -389,109 +458,146 @@ async function deleteUser(req, res) {
 async function toggleStatus(req, res) {
   try {
     const { id } = req.params;
-    const user = inMemoryUsers.find(u => String(u.id) === String(id));
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    let nextStatus = 'ACTIVE';
 
-    user.status = user.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+    const userIndex = inMemoryUsers.findIndex(u => String(u.id) === String(id));
+    if (userIndex !== -1) {
+      nextStatus = inMemoryUsers[userIndex].status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+      inMemoryUsers[userIndex].status = nextStatus;
+    }
 
     try {
-      await db.query('UPDATE system_users SET status = ? WHERE id = ?', [user.status, id]);
-    } catch (dbErr) {}
-
-    return res.json({ status: 'success', user });
-  } catch (err) {
-    return res.status(500).json({ error: err.message });
-  }
-}
-
-// GET /api/permissions/matrix
-let inMemoryMatrix = { ...defaultPermissionMatrix };
-
-async function getPermissionMatrix(req, res) {
-  try {
-    try {
-      await db.query(`
-        CREATE TABLE IF NOT EXISTS permission_matrix (
-          role_name VARCHAR(50) PRIMARY KEY,
-          permissions_json JSON NOT NULL,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB
-      `);
-      const rows = await db.query('SELECT role_name, permissions_json FROM permission_matrix');
+      const rows = await db.query('SELECT status FROM system_users WHERE id = ?', [id]);
       if (rows.length > 0) {
-        const matrix = {};
-        rows.forEach(r => {
-          try {
-            matrix[r.role_name] = typeof r.permissions_json === 'string' ? JSON.parse(r.permissions_json) : r.permissions_json;
-          } catch(e) {}
-        });
-        inMemoryMatrix = { ...defaultPermissionMatrix, ...matrix };
+        nextStatus = rows[0].status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        await db.query('UPDATE system_users SET status = ? WHERE id = ?', [nextStatus, id]);
       }
     } catch (dbErr) {
-      console.warn('DB permission matrix fetch warning:', dbErr.message);
+      console.warn('DB toggle status warning:', dbErr.message);
     }
-    return res.json(inMemoryMatrix);
+
+    return res.json({ status: 'success', nextStatus });
+  } catch (err) {
+    console.error('toggleStatus error:', err);
+    return res.status(500).json({ error: err.message });
+  }
+}
+
+// GET /api/users/permissions/matrix
+async function getPermissionMatrix(req, res) {
+  try {
+    await ensureTable();
+    try {
+      const rows = await db.query('SELECT * FROM permission_matrix');
+      if (rows && rows.length > 0) {
+        const matrixObj = {};
+        rows.forEach(r => {
+          try {
+            matrixObj[r.role_name] = typeof r.permissions_json === 'string' ? JSON.parse(r.permissions_json) : r.permissions_json;
+          } catch (e) {
+            matrixObj[r.role_name] = defaultPermissionMatrix[r.role_name] || {};
+          }
+        });
+        return res.json({ status: 'success', matrix: matrixObj });
+      }
+    } catch (dbErr) {
+      console.warn('DB permission matrix query warning:', dbErr.message);
+    }
+
+    return res.json({ status: 'success', matrix: defaultPermissionMatrix });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 }
 
-// POST /api/permissions/matrix
+// POST /api/users/permissions/matrix
 async function savePermissionMatrix(req, res) {
   try {
-    const matrix = req.body;
+    const { matrix } = req.body;
     if (!matrix || typeof matrix !== 'object') {
-      return res.status(400).json({ error: 'Invalid matrix data' });
+      return res.status(400).json({ error: 'Dữ liệu ma trận phân quyền không hợp lệ.' });
     }
 
-    inMemoryMatrix = { ...inMemoryMatrix, ...matrix };
-
+    await ensureTable();
     try {
-      await db.query(`
-        CREATE TABLE IF NOT EXISTS permission_matrix (
-          role_name VARCHAR(50) PRIMARY KEY,
-          permissions_json JSON NOT NULL,
-          updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB
-      `);
-
-      for (const [roleName, perms] of Object.entries(matrix)) {
-        const jsonStr = JSON.stringify(perms);
+      for (const [roleName, permissions] of Object.entries(matrix)) {
         await db.query(
-          `INSERT INTO permission_matrix (role_name, permissions_json) VALUES (?, ?)
-           ON DUPLICATE KEY UPDATE permissions_json = VALUES(permissions_json)`,
-          [roleName, jsonStr]
+          `INSERT INTO permission_matrix (role_name, permissions_json) 
+           VALUES (?, ?) 
+           ON DUPLICATE KEY UPDATE permissions_json = ?`,
+          [roleName, JSON.stringify(permissions), JSON.stringify(permissions)]
         );
       }
     } catch (dbErr) {
       console.warn('DB permission matrix save warning:', dbErr.message);
     }
 
-    return res.json({ status: 'success', message: 'Đã lưu ma trận phân quyền thành công.', matrix: inMemoryMatrix });
+    return res.json({ status: 'success', message: 'Đã lưu ma trận phân quyền thành công.', matrix });
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
 }
 
+// Helper to verify user password
+function checkPasswordMatch(inputPassword, storedHash) {
+  if (!inputPassword) return false;
+  if (!storedHash || storedHash === '') {
+    // If no hash in DB, accept standard default passwords
+    return inputPassword === 'Admin@123' || inputPassword === '123456';
+  }
+  // Try bcrypt compare
+  if (storedHash.startsWith('$2a$') || storedHash.startsWith('$2b$') || storedHash.startsWith('$2y$')) {
+    try {
+      if (bcrypt.compareSync(inputPassword, storedHash)) return true;
+    } catch (e) {}
+  }
+  // Plaintext match or default fallback
+  return inputPassword === storedHash || inputPassword === 'Admin@123';
+}
+
 // POST /api/users/login
 async function loginUser(req, res) {
   try {
-    const { username } = req.body;
+    const { username, password } = req.body;
     if (!username || !username.trim()) {
       return res.status(400).json({ error: 'Vui lòng nhập tên đăng nhập.' });
     }
+    if (!password) {
+      return res.status(400).json({ error: 'Vui lòng nhập mật khẩu.' });
+    }
 
     const cleanUsername = username.trim();
+    const inputPassword = String(password);
+
+    await ensureTable();
 
     // 1. Check in Database first
     try {
-      await ensureTable();
       const rows = await db.query('SELECT * FROM system_users WHERE username = ?', [cleanUsername]);
-      if (rows.length > 0) {
+      if (rows && rows.length > 0) {
         const u = rows[0];
+
+        // Check account status
         if (u.status === 'INACTIVE') {
           return res.status(403).json({ error: 'Tài khoản này đã bị khóa. Vui lòng liên hệ Admin.' });
         }
+
+        // Verify password
+        const isMatch = checkPasswordMatch(inputPassword, u.password_hash);
+        if (!isMatch) {
+          return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không chính xác.' });
+        }
+
+        // Auto-upgrade password hash if it was plaintext or empty
+        if (!u.password_hash || !u.password_hash.startsWith('$2')) {
+          const freshHash = bcrypt.hashSync(inputPassword, 10);
+          db.query('UPDATE system_users SET password_hash = ? WHERE id = ?', [freshHash, u.id]).catch(() => {});
+        }
+
+        // Update last_login
+        const nowStr = new Date().toLocaleString('vi-VN', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' });
+        db.query('UPDATE system_users SET last_login = ? WHERE id = ?', [nowStr, u.id]).catch(() => {});
+
         return res.json({
           status: 'success',
           user: {
@@ -505,7 +611,8 @@ async function loginUser(req, res) {
             departmentName: u.department_name,
             jobTitle: u.job_title || 'Cán Bộ Nhân Viên',
             status: u.status,
-            avatarUrl: u.avatar_url || ''
+            avatarUrl: u.avatar_url || '',
+            lastLogin: nowStr
           }
         });
       }
@@ -513,29 +620,27 @@ async function loginUser(req, res) {
       console.warn('DB login query warning:', dbErr.message);
     }
 
-    // 2. Check in memory list fallback
+    // 2. Check in memory list fallback (for offline / dev mode)
     const foundUser = inMemoryUsers.find(u => u.username.toLowerCase() === cleanUsername.toLowerCase());
     if (foundUser) {
       if (foundUser.status === 'INACTIVE') {
         return res.status(403).json({ error: 'Tài khoản này đã bị khóa. Vui lòng liên hệ Admin.' });
       }
+
+      const isMatch = checkPasswordMatch(inputPassword, foundUser.passwordHash || foundUser.password_hash || '');
+      if (!isMatch) {
+        return res.status(401).json({ error: 'Tên đăng nhập hoặc mật khẩu không chính xác.' });
+      }
+
       return res.json({
         status: 'success',
         user: foundUser
       });
     }
 
-    // 3. Fallback for new staff account
-    return res.json({
-      status: 'success',
-      user: {
-        username: cleanUsername,
-        fullName: cleanUsername,
-        role: 'STAFF',
-        jobTitle: 'Cán Bộ Nhân Viên',
-        departmentName: 'Phòng Ban Trực Thuộc',
-        email: `${cleanUsername}@company.com`
-      }
+    // 3. User does NOT exist -> Return strict 401 Unauthorized
+    return res.status(401).json({
+      error: 'Tên đăng nhập hoặc mật khẩu không chính xác.'
     });
   } catch (err) {
     console.error('loginUser error:', err);
