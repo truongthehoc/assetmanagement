@@ -142,6 +142,8 @@ async function approveDevice(req, res) {
             cpu: cpuModel
         });
 
+        const initialStatus = (userId || departmentId) ? 'IN_USE' : 'READY';
+
         // Insert into official Assets table including Optional Procurement & Financial fields & IP Address
         const insertRes = await db.query(
             `INSERT INTO assets 
@@ -149,13 +151,14 @@ async function approveDevice(req, res) {
                  serial_number, ip_address, mainboard_model, cpu_model, ram_total_gb, disk_total_gb, gpu_model, os_info, 
                  baseline_snapshot, current_snapshot, purchase_date, warranty_months,
                  purchase_cost, depreciation_months, vendor_supplier, warranty_expiration_date, po_document_url)
-             VALUES (?, ?, ?, ?, ?, 'IN_USE', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 assetTag,
                 assetTag, // QR code string matches Asset Tag
                 dev.agent_id,
                 hostname || dev.hostname,
                 assetType || hw.deviceType || 'Desktop',
+                initialStatus,
                 departmentId || null,
                 locationId || null,
                 userId || null,

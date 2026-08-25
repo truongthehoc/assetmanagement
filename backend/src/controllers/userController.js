@@ -107,8 +107,11 @@ const defaultSystemUsers = [
 
 let inMemoryUsers = [...defaultSystemUsers];
 
+let tableEnsured = false;
+
 // Helper to ensure table exists
 async function ensureTable() {
+  if (tableEnsured) return;
   try {
     await db.query(`
       CREATE TABLE IF NOT EXISTS system_users (
@@ -137,9 +140,10 @@ async function ensureTable() {
       await db.query(`ALTER TABLE system_users ADD COLUMN job_title VARCHAR(255) DEFAULT ''`);
     } catch (e) {}
 
-    // Check if initial admin user exists in MySQL
-    const adminRows = await db.query("SELECT id FROM system_users WHERE username = 'admin_system'");
-    if (!adminRows || adminRows.length === 0) {
+    // Seed default users ONLY if system_users table is completely empty
+    const countRows = await db.query('SELECT COUNT(*) as cnt FROM system_users');
+    const cnt = countRows && countRows[0] ? (countRows[0].cnt || countRows[0]['COUNT(*)'] || 0) : 0;
+    if (parseInt(cnt, 10) === 0) {
       for (const u of defaultSystemUsers) {
         await db.query(
           `INSERT IGNORE INTO system_users (id, username, full_name, email, phone, employee_id, role, department_name, job_title, avatar_url, status, auth_method, last_login)
@@ -148,6 +152,7 @@ async function ensureTable() {
         );
       }
     }
+    tableEnsured = true;
   } catch (err) {
     // DB offline/mock mode
   }

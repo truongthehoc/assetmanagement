@@ -293,7 +293,7 @@ async function createManualAsset(req, res) {
             finalAssetTag = `1000${36038 + cnt}`;
         }
 
-        const initialStatus = status || 'READY';
+        const initialStatus = status || ((userId || departmentId) ? 'IN_USE' : 'READY');
 
         const sql = `
             INSERT INTO assets 
