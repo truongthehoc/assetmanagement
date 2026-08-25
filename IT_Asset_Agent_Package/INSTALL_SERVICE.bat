@@ -22,6 +22,11 @@ echo Machine IP Server mac dinh: %DEFAULT_SERVER%
 set /p SERVER_URL="Nhap diachi Server (Nhan Enter de dung mac dinh %DEFAULT_SERVER%): "
 if "%SERVER_URL%"=="" set SERVER_URL=%DEFAULT_SERVER%
 
+:: Auto-prepend http:// if user entered IP without protocol
+if not "%SERVER_URL:~0,7%"=="http://" if not "%SERVER_URL:~0,8%"=="https://" (
+    set SERVER_URL=http://%SERVER_URL%
+)
+
 set TASK_NAME=ITAssetManagementAgent
 set AGENT_SCRIPT=%~dp0IT_Asset_Agent.ps1
 
@@ -33,7 +38,7 @@ schtasks /create /tn "%TASK_NAME%" /tr "powershell.exe -NoProfile -ExecutionPoli
 if %errorlevel% equ 0 (
     echo.
     echo [2/2] Gui bao cao telemetry khoi tao ve Server (%SERVER_URL%)...
-    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "& '%AGENT_SCRIPT%' -ServerUrl '%SERVER_URL%' -IntervalMinutes 10"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%AGENT_SCRIPT%" -ServerUrl "%SERVER_URL%" -RunOnce
     schtasks /run /tn "%TASK_NAME%" >nul 2>&1
     echo.
     echo ======================================================================

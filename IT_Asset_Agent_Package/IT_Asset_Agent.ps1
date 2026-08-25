@@ -7,10 +7,15 @@
 Param (
     [string]$ServerUrl = "http://localhost:3001",
     [string]$SecretKey = "AssetManagementAgentSecretKey2026",
-    [int]$IntervalMinutes = 10
+    [int]$IntervalMinutes = 10,
+    [switch]$RunOnce
 )
 
 $ErrorActionPreference = "SilentlyContinue"
+
+if (-not $ServerUrl.StartsWith("http://") -and -not $ServerUrl.StartsWith("https://")) {
+    $ServerUrl = "http://$ServerUrl"
+}
 
 Write-Host "======================================================================" -ForegroundColor Cyan
 Write-Host "  IT ASSET MANAGEMENT AGENT - WINDOWS COLLECTOR SERVICE" -ForegroundColor Green
@@ -212,6 +217,12 @@ function Send-TelemetryReport {
     catch {
         Write-Host "[AGENT ERROR] Connection failed to $ServerUrl : $_`n" -ForegroundColor Red
     }
+}
+
+# RunOnce mode for installation verification
+if ($RunOnce) {
+    Send-TelemetryReport
+    exit 0
 }
 
 # Infinite scan loop every N minutes
