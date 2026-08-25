@@ -41,6 +41,25 @@ async function reportData(req, res) {
             return res.status(400).json({ error: 'Missing required agent identification parameters' });
         }
 
+        // Resolve Real Remote IP from TCP Socket Request Header if valid
+        let remoteIp = req.headers['x-forwarded-for'] || req.socket.remoteAddress || req.ip || '';
+        if (remoteIp.includes('::ffff:')) {
+            remoteIp = remoteIp.replace('::ffff:', '');
+        }
+        if (remoteIp === '::1' || remoteIp === '127.0.0.1') {
+            remoteIp = '';
+        }
+
+        let resolvedIp = ipAddress;
+        if (remoteIp && (
+            !resolvedIp || 
+            resolvedIp.startsWith('169.254.') || 
+            (remoteIp.startsWith('10.') && !resolvedIp.startsWith('10.')) ||
+            (remoteIp.startsWith('192.168.') && !resolvedIp.startsWith('192.168.'))
+        )) {
+            resolvedIp = remoteIp;
+        }
+
         const hwJsonStr = JSON.stringify(hardware || {});
         const swJsonStr = JSON.stringify(software || []);
 
@@ -62,7 +81,7 @@ async function reportData(req, res) {
                     current_snapshot = ?,
                     updated_at = CURRENT_TIMESTAMP
                 WHERE id = ?`,
-                [hostname, osName || asset.os_info, ipAddress || asset.ip_address, JSON.stringify({ hardware, software }), asset.id]
+                [hostname, osName || asset.os_info, resolvedIp || asset.ip_address, JSON.stringify({ hardware, software }), asset.id]
             );
 
             // Run Drift Engine inspection
@@ -92,14 +111,14 @@ async function reportData(req, res) {
                         software_json = ?,
                         last_seen = CURRENT_TIMESTAMP
                     WHERE agent_id = ?`,
-                    [hostname, domainWorkgroup, osName, ipAddress, macAddress, serialNumber, hwJsonStr, swJsonStr, agentId]
+                    [hostname, domainWorkgroup, osName, resolvedIp, macAddress, serialNumber, hwJsonStr, swJsonStr, agentId]
                 );
             } else {
                 await db.query(
                     `INSERT INTO devices_pending 
                         (agent_id, hostname, domain_workgroup, os_name, ip_address, mac_address, serial_number, hardware_json, software_json, status)
                      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')`,
-                    [agentId, hostname, domainWorkgroup, osName, ipAddress, macAddress, serialNumber, hwJsonStr, swJsonStr]
+                    [agentId, hostname, domainWorkgroup, osName, resolvedIp, macAddress, serialNumber, hwJsonStr, swJsonStr]
                 );
             }
 

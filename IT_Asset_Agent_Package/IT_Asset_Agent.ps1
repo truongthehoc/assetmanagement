@@ -20,32 +20,47 @@ Write-Host " Scan Interval     : Every $IntervalMinutes minutes" -ForegroundColo
 Write-Host " Press Ctrl+C at any time to stop the agent service.`n" -ForegroundColor Gray
 
 function Get-ActiveIPv4 {
-    # 1. Primary Method: Get IP from active default gateway network interface (Physical LAN/Wi-Fi)
+    # 1. Primary Method: WMI Physical NIC with active Default Gateway (Excluding VirtualBox/VMware/vEthernet)
     try {
-        $activeRoute = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -AddressFamily IPv4 -ErrorAction SilentlyContinue | Select-Object -First 1
+        $wmiNics = Get-CimInstance Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object { 
+            $_.IPEnabled -eq $true -and 
+            $_.DefaultIPGateway -and 
+            $_.Description -notlike "*VirtualBox*" -and
+            $_.Description -notlike "*VMware*" -and
+            $_.Description -notlike "*vEthernet*" -and
+            $_.Description -notlike "*TAP*" -and
+            $_.Description -notlike "*VPN*"
+        }
+        foreach ($nic in $wmiNics) {
+            foreach ($ipAddr in $nic.IPAddress) {
+                if ($ipAddr -like "*.*" -and $ipAddr -ne "127.0.0.1" -and $ipAddr -notlike "169.254.*") {
+                    return $ipAddr
+                }
+            }
+        }
+    } catch {}
+
+    # 2. Secondary Method: Get IP from lowest metric default route interface
+    try {
+        $activeRoute = Get-NetRoute -DestinationPrefix "0.0.0.0/0" -AddressFamily IPv4 -ErrorAction SilentlyContinue | Sort-Object RouteMetric | Select-Object -First 1
         if ($activeRoute) {
             $routeIp = (Get-NetIPAddress -InterfaceIndex $activeRoute.InterfaceIndex -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { $_.IPAddress -notlike "169.254.*" -and $_.IPAddress -ne "127.0.0.1" } | Select-Object -ExpandProperty IPAddress -First 1)
             if ($routeIp) { return $routeIp }
         }
     } catch {}
 
-    # 2. Secondary Method: Filter connected IPv4 adapters ignoring loopback, virtual NICs and APIPA 169.254
+    # 3. Tertiary Method: Filter connected IPv4 adapters ignoring loopback, virtual NICs and APIPA 169.254
     $ip = (Get-NetIPAddress -AddressFamily IPv4 -ErrorAction SilentlyContinue | Where-Object { 
         $_.IPAddress -ne "127.0.0.1" -and 
         $_.IPAddress -notlike "169.254.*" -and 
         $_.InterfaceAlias -notlike "*Loopback*" -and
         $_.InterfaceAlias -notlike "*vEthernet*" -and
         $_.InterfaceAlias -notlike "*Virtual*" -and
+        $_.InterfaceAlias -notlike "*VMware*" -and
         $_.InterfaceAlias -notlike "*WSL*"
     } | Select-Object -ExpandProperty IPAddress -First 1)
 
     if ($ip) { return $ip }
-
-    # 3. WMI Fallback: Connected NIC with Default Gateway
-    try {
-        $wmiIp = (Get-CimInstance Win32_NetworkAdapterConfiguration -ErrorAction SilentlyContinue | Where-Object { $_.IPEnabled -eq $true -and $_.DefaultIPGateway } | Select-Object -ExpandProperty IPAddress | Where-Object { $_ -like "*.*" -and $_ -notlike "169.254.*" } | Select-Object -First 1)
-        if ($wmiIp) { return $wmiIp }
-    } catch {}
 
     return "10.30.11.152"
 }
