@@ -34,7 +34,9 @@ import {
   ChevronDown,
   Package,
   Layers,
-  Grid
+  Grid,
+  Save,
+  EyeOff
 } from 'lucide-react';
 import { apiUrl } from '../utils/api';
 import { useToast } from '../context/ToastContext';
